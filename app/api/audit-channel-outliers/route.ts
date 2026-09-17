@@ -258,12 +258,12 @@ export async function POST(request: Request) {
       'channel_uploads',
       cacheKey,
       async () => {
-        // Step A: Fetch 35 playlist items from the uploads playlist (UU...)
+        // Step A: Fetch up to 50 playlist items from the uploads playlist (UU...)
         const playlistUrl = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
         playlistUrl.searchParams.set('key', apiKey);
         playlistUrl.searchParams.set('part', 'contentDetails,snippet');
         playlistUrl.searchParams.set('playlistId', channel.uploadsPlaylistId);
-        playlistUrl.searchParams.set('maxResults', '35');
+        playlistUrl.searchParams.set('maxResults', '50');
 
         const plRes = await fetch(playlistUrl.toString(), { cache: 'no-store' });
         const plJson = await plRes.json();
@@ -324,27 +324,16 @@ export async function POST(request: Request) {
       return {
         ...v,
         multiplier: mult,
-        isOutlier: mult >= 3.0,
+        isOutlier: mult >= 2.0,
       };
     });
 
-    // 8. Surface Outlier Videos (Sorted highest multiplier first)
+    // 8. Surface Outlier Videos & Top 10 Catalog (Sorted highest multiplier first)
     evaluatedVideos.sort((a, b) => b.multiplier - a.multiplier);
-    const outliers = evaluatedVideos.filter((v) => v.multiplier >= 3.0);
-    const finalDisplayList = outliers.length > 0 ? outliers : evaluatedVideos.slice(0, 6);
+    const topVideos = evaluatedVideos.slice(0, 10);
+    const outliers = evaluatedVideos.filter((v) => v.multiplier >= 2.0);
 
-    // 9. Automated AI Psychological Breakdown on the #1 Outlier
-    const topPerformer = finalDisplayList[0] || candidateList[0];
-    let aiAnalysis: OutlierAiAnalysis | null = null;
-
-    if (topPerformer) {
-      aiAnalysis = await generateTopOutlierAnalysis(
-        topPerformer.title,
-        topPerformer.viewCount,
-        topPerformer.multiplier,
-        channel.title
-      );
-    }
+    const topPerformer = topVideos[0] || null;
 
     return NextResponse.json({
       success: true,
@@ -357,10 +346,10 @@ export async function POST(request: Request) {
         medianViews: channelMedian,
         videosScanned: candidateList.length,
       },
-      outliers: finalDisplayList,
+      topVideos: topVideos,
+      outliers: outliers,
       totalOutliersFound: outliers.length,
       topOutlier: topPerformer,
-      aiAnalysis,
       remainingCredits: remainingBalance,
     });
   } catch (error: any) {

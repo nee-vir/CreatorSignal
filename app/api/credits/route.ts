@@ -23,12 +23,26 @@ export async function GET(request: Request) {
       });
     }
 
-    // 1. Fetch balance & daily allowance
-    const { data: creditRow } = await supabase
+    // 1. Fetch balance & daily allowance (or auto-provision 50 starter credits)
+    let { data: creditRow } = await supabase
       .from('credits')
       .select('balance, daily_allowance, updated_at')
       .eq('user_id', userId)
       .maybeSingle();
+
+    if (!creditRow) {
+      const { data: createdRow } = await supabase
+        .from('credits')
+        .upsert(
+          { user_id: userId, balance: 50, daily_allowance: 20, updated_at: new Date().toISOString() },
+          { onConflict: 'user_id' }
+        )
+        .select('balance, daily_allowance, updated_at')
+        .maybeSingle();
+      if (createdRow) {
+        creditRow = createdRow;
+      }
+    }
 
     // 2. Fetch active subscription details (plan tier & billing period end)
     const { data: sub } = await supabase
@@ -40,7 +54,7 @@ export async function GET(request: Request) {
 
     const planTier = (sub?.plan_tier as PlanTier) || 'free';
     const currentPeriodEnd = sub?.current_period_end ?? null;
-    const tierQuota = TIER_QUOTAS[planTier] || 20;
+    const tierQuota = TIER_QUOTAS[planTier] || 50;
 
     // 3. Fetch recent transactions
     const { data: transactions } = await supabase
@@ -51,9 +65,9 @@ export async function GET(request: Request) {
       .limit(10);
 
     return NextResponse.json({
-      balance: creditRow?.balance ?? tierQuota,
+      balance: creditRow?.balance ?? 50,
       quota: tierQuota,
-      dailyAllowance: tierQuota, // backwards compatibility
+      dailyAllowance: creditRow?.daily_allowance ?? 20,
       planTier: planTier,
       currentPeriodEnd: currentPeriodEnd,
       transactions: transactions ?? [],

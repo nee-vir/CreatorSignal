@@ -10,6 +10,7 @@ import {
   QueryConfirmationDetails,
   isConfirmationSkipped,
 } from '@/components/QueryConfirmationModal';
+import { AiCopilotChat } from '@/components/AiCopilotChat';
 
 interface VphTrackerProps {
   creditBalance: number;
@@ -361,7 +362,38 @@ export function VphTracker({
             })}
           </div>
         )}
-      </div>
+
+          {/* Embedded AI Co-Pilot */}
+          {videos.length > 0 && (
+            <div className="mt-6">
+              <AiCopilotChat
+                toolName="Views Per Hour Velocity Speedometer"
+                contextData={{
+                  tool: 'vph_tracker',
+                  monitoredCount: videos.length,
+                  videos: videos.map((v) => ({
+                    id: v.video_id,
+                    title: v.title,
+                    currentVph: v.current_vph,
+                    initialViews: v.initial_view_count,
+                    latestViews: v.latest_view_count,
+                    monitoredSince: v.initial_timestamp,
+                  })),
+                }}
+                contextSummary={`Tracking velocity on ${videos.length} live YouTube videos`}
+                suggestedPrompts={[
+                  '🔥 Which of these monitored videos is accelerating the fastest right now?',
+                  '📊 Project the next 24-hour view count for my fastest moving video',
+                  '📈 Calculate the percentage difference in velocity between the top 2 videos',
+                  '💡 What does a high velocity in the first 2 hours tell us about recommendation pickup?',
+                ]}
+                creditBalance={creditBalance}
+                onCreditDeducted={onCreditDeducted}
+                onInsufficientCredits={onInsufficientCredits}
+              />
+            </div>
+          )}
+        </div>
 
       {/* Query Cost Confirmation Modal */}
       <QueryConfirmationModal

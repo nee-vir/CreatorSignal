@@ -11,6 +11,7 @@ import { UniversalSearchBox } from '@/components/UniversalSearchBox';
 import { FeatureTabs } from '@/components/FeatureTabs';
 import { RazorpayModal } from '@/components/RazorpayModal';
 import { AuthModal } from '@/components/AuthModal';
+import { BuyCreditsModal } from '@/components/BuyCreditsModal';
 import { LoginScreen } from '@/components/LoginScreen';
 import { ProfileView } from '@/components/ProfileView';
 import { PlanTier } from '@/lib/credits/deduct';
@@ -18,14 +19,15 @@ import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { apiFetch } from '@/lib/api-client';
 
 export default function DashboardPage() {
-  const [creditBalance, setCreditBalance] = useState(20);
+  const [creditBalance, setCreditBalance] = useState(50);
   const [dailyAllowance, setDailyAllowance] = useState(20);
-  const [quota, setQuota] = useState(20);
+  const [quota, setQuota] = useState(50);
   const [planTier, setPlanTier] = useState<PlanTier>('free');
   const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('universal');
   const [activeView, setActiveView] = useState<'studio' | 'profile'>('studio');
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [isBuyCreditsModalOpen, setIsBuyCreditsModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [authChecking, setAuthChecking] = useState(true);
@@ -94,7 +96,11 @@ export default function DashboardPage() {
   };
 
   const handleInsufficientCredits = () => {
-    setIsUpgradeModalOpen(true);
+    setIsBuyCreditsModalOpen(true);
+  };
+
+  const handleCreditPackSuccess = (newBalance: number) => {
+    setCreditBalance(newBalance);
   };
 
   const handleUpgradeSuccess = (newQuota: number, newTier: PlanTier, periodEnd?: string) => {
@@ -167,6 +173,7 @@ export default function DashboardPage() {
         planTier={planTier}
         currentPeriodEnd={currentPeriodEnd}
         onOpenUpgradeModal={() => setIsUpgradeModalOpen(true)}
+        onOpenBuyCredits={() => setIsBuyCreditsModalOpen(true)}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
         user={user}
         onSignOut={handleSignOut}
@@ -185,6 +192,7 @@ export default function DashboardPage() {
             currentPeriodEnd={currentPeriodEnd}
             onBackToStudio={() => setActiveView('studio')}
             onOpenUpgradeModal={() => setIsUpgradeModalOpen(true)}
+            onOpenBuyCredits={() => setIsBuyCreditsModalOpen(true)}
             onSignOut={handleSignOut}
           />
         </main>
@@ -276,6 +284,14 @@ export default function DashboardPage() {
         isOpen={isUpgradeModalOpen}
         onClose={() => setIsUpgradeModalOpen(false)}
         onSuccess={handleUpgradeSuccess}
+      />
+
+      {/* Buy Credits Top-Up Packs Modal */}
+      <BuyCreditsModal
+        isOpen={isBuyCreditsModalOpen}
+        onClose={() => setIsBuyCreditsModalOpen(false)}
+        onSuccess={handleCreditPackSuccess}
+        currentBalance={creditBalance}
       />
     </div>
   );

@@ -15,6 +15,7 @@ import {
   Calendar,
   CreditCard,
   History,
+  Coins,
 } from 'lucide-react';
 import { PlanTier } from '@/lib/credits/deduct';
 import { UserProfile } from '@/components/Navbar';
@@ -30,6 +31,7 @@ interface ProfileViewProps {
   currentPeriodEnd: string | null;
   onBackToStudio: () => void;
   onOpenUpgradeModal: () => void;
+  onOpenBuyCredits?: () => void;
   onSignOut: () => void;
 }
 
@@ -49,6 +51,7 @@ export function ProfileView({
   currentPeriodEnd,
   onBackToStudio,
   onOpenUpgradeModal,
+  onOpenBuyCredits,
   onSignOut,
 }: ProfileViewProps) {
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
@@ -216,6 +219,18 @@ export function ProfileView({
           <span className="text-[11px] text-slate-500 mt-1 block">
             Max Cycle Quota: {quota} credits
           </span>
+          {onOpenBuyCredits && (
+            <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] text-slate-500 font-medium">Need more credits?</span>
+              <button
+                onClick={onOpenBuyCredits}
+                className="text-xs font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1 cursor-pointer transition-colors"
+              >
+                <Coins className="w-3.5 h-3.5 text-purple-600" />
+                <span>Buy Credits</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Daily Allowance */}

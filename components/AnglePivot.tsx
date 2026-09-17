@@ -9,6 +9,7 @@ import {
   QueryConfirmationDetails,
   isConfirmationSkipped,
 } from '@/components/QueryConfirmationModal';
+import { AiCopilotChat } from '@/components/AiCopilotChat';
 
 interface AnglePivotProps {
   creditBalance: number;
@@ -247,6 +248,33 @@ export function AnglePivot({
                 </div>
               );
             })}
+          </div>
+
+          {/* Embedded AI Co-Pilot */}
+          <div className="mt-6">
+            <AiCopilotChat
+              toolName={`Hook & Angle Pivot: "${videoTitle}"`}
+              contextData={{
+                tool: 'angle_pivot',
+                videoTitle: videoTitle,
+                generatedAngles: angles.map((a) => ({
+                  type: a.type,
+                  title: a.title,
+                  trigger: a.trigger,
+                  openingScript: a.openingScript,
+                })),
+              }}
+              contextSummary={`Refining 3 psychological angles for "${videoTitle}"`}
+              suggestedPrompts={[
+                '🎯 Expand the opening script for Angle #1 into the first 60 seconds',
+                '💡 Give me 5 thumbnail image concepts to match Angle #2',
+                '🔤 Write a shorter, punchier variant of the title for Angle #3',
+                '🔍 Which of these 3 angles has the lowest audience bounce risk?',
+              ]}
+              creditBalance={creditBalance}
+              onCreditDeducted={onCreditDeducted}
+              onInsufficientCredits={onInsufficientCredits}
+            />
           </div>
         </div>
       )}

@@ -25,6 +25,7 @@ export const CREDIT_COSTS = {
   ANGLE_PIVOT: 10, // 10 credits for generating 3 psychological hooks
   SINGLE_VIDEO_CHECK: 10, // 10 credits for single video check
   CHANNEL_AUDIT: 35, // 35 credits for deep channel outlier audit
+  AI_CHAT: 5, // 5 credits per AI Co-Pilot query
 } as const;
 
 export type CreditAction =
@@ -35,6 +36,8 @@ export type CreditAction =
   | 'angle_pivot'
   | 'single_video_check'
   | 'channel_audit'
+  | 'ai_chat'
+  | 'credit_pack_purchase'
   | 'subscription_refill'
   | 'daily_reset'
   | 'signup_bonus';
@@ -53,26 +56,44 @@ export class InsufficientCreditsError extends Error {
 
 /**
  * Retrieves the current credit balance and daily allowance for a user.
+ * Automatically provisions 50 starter credits if user record is missing.
  */
 export async function getCreditBalance(userId: string): Promise<{ balance: number; dailyAllowance: number }> {
   try {
     const supabase = createAdminSupabaseClient();
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('credits')
       .select('balance, daily_allowance')
       .eq('user_id', userId)
       .maybeSingle();
 
     if (error || !data) {
-      return { balance: 20, dailyAllowance: 20 };
+      // Auto-provision 50 starter credits for newly authenticated user
+      const { data: createdRow } = await supabase
+        .from('credits')
+        .upsert(
+          { user_id: userId, balance: 50, daily_allowance: 20, updated_at: new Date().toISOString() },
+          { onConflict: 'user_id' }
+        )
+        .select('balance, daily_allowance')
+        .maybeSingle();
+
+      if (createdRow) {
+        return {
+          balance: createdRow.balance,
+          dailyAllowance: createdRow.daily_allowance ?? 20,
+        };
+      }
+      return { balance: 50, dailyAllowance: 20 };
     }
 
     return {
       balance: data.balance,
       dailyAllowance: data.daily_allowance ?? 20,
     };
-  } catch {
-    return { balance: 20, dailyAllowance: 20 };
+  } catch (err) {
+    console.warn('[Credits] getCreditBalance exception:', err);
+    return { balance: 50, dailyAllowance: 20 };
   }
 }
 
@@ -102,7 +123,7 @@ export async function getUserPlanTier(userId: string): Promise<PlanTier> {
 /**
  * Reusable Server Credit Deduction Utility
  * 
- * 1. Checks current balance in Supabase.
+ * 1. Checks current balance in Supabase (auto-provisions 50 credits if first request).
  * 2. Rejects request with InsufficientCreditsError if balance < cost.
  * 3. Atomically updates balance and creates an audit entry in `credit_transactions`.
  */
@@ -115,24 +136,38 @@ export async function deductCredits(
     const supabase = createAdminSupabaseClient();
 
     // 1. Fetch current credit balance
-    const { data: creditRow, error: fetchError } = await supabase
+    let { data: creditRow, error: fetchError } = await supabase
       .from('credits')
       .select('balance')
       .eq('user_id', userId)
       .maybeSingle();
 
+    // If user record does not exist in credits table yet, auto-provision 50 starter credits
     if (fetchError || !creditRow) {
-      throw new Error('Could not retrieve user credit account.');
+      const { data: createdRow, error: upsertError } = await supabase
+        .from('credits')
+        .upsert(
+          { user_id: userId, balance: 50, daily_allowance: 20, updated_at: new Date().toISOString() },
+          { onConflict: 'user_id' }
+        )
+        .select('balance')
+        .maybeSingle();
+
+      if (!upsertError && createdRow) {
+        creditRow = createdRow;
+      } else {
+        creditRow = { balance: 50 };
+      }
     }
 
-    const currentBalance = creditRow.balance;
+    const currentBalance = typeof creditRow.balance === 'number' ? creditRow.balance : 50;
 
     // 2. Validate sufficient balance
     if (currentBalance < cost) {
       throw new InsufficientCreditsError(currentBalance, cost);
     }
 
-    const newBalance = currentBalance - cost;
+    const newBalance = Math.max(0, currentBalance - cost);
 
     // 3. Update balance in database
     const { error: updateError } = await supabase
@@ -144,7 +179,7 @@ export async function deductCredits(
       .eq('user_id', userId);
 
     if (updateError) {
-      throw new Error(`Failed to deduct credits: ${updateError.message}`);
+      console.error('[Credits] Balance update error:', updateError.message);
     }
 
     // 4. Log transaction in audit table
@@ -163,10 +198,7 @@ export async function deductCredits(
     if (err instanceof InsufficientCreditsError) {
       throw err;
     }
-    console.warn('[Credits] Local dev fallback deduction:', err.message);
-    return {
-      success: true,
-      remainingBalance: Math.max(20 - cost, 0),
-    };
+    console.error('[Credits] deductCredits error:', err.message || err);
+    throw err;
   }
 }

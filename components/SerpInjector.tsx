@@ -20,6 +20,7 @@ import {
   QueryConfirmationDetails,
   isConfirmationSkipped,
 } from '@/components/QueryConfirmationModal';
+import { AiCopilotChat } from '@/components/AiCopilotChat';
 
 interface SerpInjectorProps {
   creditBalance: number;
@@ -161,8 +162,7 @@ export function SerpInjector({
               Test Your Thumbnail Before You Hit Publish
             </h2>
             <p className="text-slate-600 text-sm mt-1 max-w-2xl">
-              See your draft thumbnail injected directly into the <strong>#3 ranking spot</strong> on YouTube,
-              sitting right next to the actual top videos for your topic.
+              See your draft thumbnail previewed directly alongside actual top videos for your topic in the YouTube feed to test visual contrast, focal points, and font readability.
             </p>
           </div>
           <div className="flex items-center gap-2 text-xs font-mono bg-slate-100 px-3.5 py-2 rounded-xl border border-slate-200 self-start md:self-auto text-slate-700">
@@ -474,8 +474,7 @@ export function SerpInjector({
                               <span>Just now</span>
                             </div>
                             <p className="text-xs text-slate-600 mt-2 line-clamp-2">
-                              This is your video sitting at position #3. Notice if your text is readable
-                              and whether your colors grab your eyes before the other videos!
+                              Draft Thumbnail In-Feed Preview: Compare your color palette, face focal points, and text legibility against top search results.
                             </p>
                           </div>
                         </div>
@@ -524,9 +523,6 @@ export function SerpInjector({
                             alt={comp.title}
                             className="w-full h-full object-cover"
                           />
-                          <span className="absolute top-2 left-2 bg-black/70 px-1.5 py-0.5 rounded text-[10px] font-mono text-white font-medium">
-                            #{item.rank}
-                          </span>
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="text-base font-bold text-slate-900 line-clamp-2">{comp.title}</h3>
@@ -548,9 +544,6 @@ export function SerpInjector({
                             alt={comp.title}
                             className="w-full h-full object-cover"
                           />
-                          <span className="absolute top-2 left-2 bg-black/70 px-1.5 py-0.5 rounded text-[10px] font-mono text-white">
-                            #{item.rank}
-                          </span>
                         </div>
                         <div>
                           <h3 className="text-sm font-bold text-slate-900 line-clamp-2">{comp.title}</h3>
@@ -565,6 +558,32 @@ export function SerpInjector({
               })}
             </div>
           </div>
+
+          {/* Embedded Conversational AI Co-Pilot */}
+          <AiCopilotChat
+            toolName={`Thumbnail SERP Competitor Simulator: "${keyword}"`}
+            contextData={{
+              tool: 'serp_simulator',
+              targetKeyword: keyword,
+              draftTitle: draftTitle,
+              competitors: competitors.map((c) => ({
+                title: c.title,
+                channel: c.channelTitle,
+                views: c.viewCount,
+                publishedAt: c.publishedAt,
+              })),
+            }}
+            contextSummary={`Analyzing draft vs ${competitors.length} search competitors for "${keyword}"`}
+            suggestedPrompts={[
+              '🎨 How can I make my thumbnail contrast more intensely against these competitors?',
+              '🔤 Is my title punchier than the competitors in this search feed?',
+              '🎯 What unique psychological angle is completely missing from these top videos?',
+              '📊 Calculate the average view count of these competitor videos',
+            ]}
+            creditBalance={creditBalance}
+            onCreditDeducted={onCreditDeducted}
+            onInsufficientCredits={onInsufficientCredits}
+          />
         </div>
       )}
 

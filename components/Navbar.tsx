@@ -13,6 +13,7 @@ import {
   LogOut,
   Wand2,
   Search,
+  Coins,
 } from 'lucide-react';
 import { PlanTier } from '@/lib/credits/deduct';
 
@@ -28,6 +29,7 @@ interface NavbarProps {
   planTier: PlanTier;
   currentPeriodEnd?: string | null;
   onOpenUpgradeModal: () => void;
+  onOpenBuyCredits?: () => void;
   onOpenAuthModal: () => void;
   user: UserProfile | null;
   onSignOut: () => void;
@@ -55,6 +57,7 @@ export function Navbar({
   planTier,
   currentPeriodEnd,
   onOpenUpgradeModal,
+  onOpenBuyCredits,
   onOpenAuthModal,
   user,
   onSignOut,
@@ -144,10 +147,22 @@ export function Navbar({
               <button
                 id="upgrade-button"
                 onClick={onOpenUpgradeModal}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-95 shadow-xs transition-all hover:scale-105 active:scale-95 whitespace-nowrap shrink-0"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-95 shadow-xs transition-all hover:scale-105 active:scale-95 whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Upgrade</span>
+              </button>
+            )}
+
+            {/* Buy Credits Top-Up */}
+            {onOpenBuyCredits && (
+              <button
+                id="buy-credits-btn"
+                onClick={onOpenBuyCredits}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-purple-800 bg-purple-100 hover:bg-purple-200 border border-purple-300 shadow-2xs transition-all hover:scale-105 active:scale-95 whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                <Coins className="w-3.5 h-3.5 text-purple-700" />
+                <span>Buy Credits</span>
               </button>
             )}
 

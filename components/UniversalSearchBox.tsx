@@ -25,6 +25,7 @@ import {
   QueryConfirmationDetails,
   isConfirmationSkipped,
 } from '@/components/QueryConfirmationModal';
+import { AiCopilotChat } from '@/components/AiCopilotChat';
 
 interface UniversalSearchBoxProps {
   creditBalance: number;
@@ -62,6 +63,15 @@ interface ChannelAuditResult {
     medianViews: number;
     videosScanned: number;
   };
+  topVideos?: Array<{
+    id: string;
+    title: string;
+    thumbnail: string;
+    viewCount: number;
+    publishedAt: string;
+    multiplier: number;
+    isOutlier: boolean;
+  }>;
   outliers: Array<{
     id: string;
     title: string;
@@ -467,53 +477,34 @@ export function UniversalSearchBox({
           </div>
 
           {/* SINGLE VIDEO AI PACKAGING BREAKDOWN */}
-          {videoResult.aiAnalysis && (
-            <div className="mt-6 pt-6 border-t border-slate-200/80 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center">
-                    <Brain className="w-4 h-4 text-purple-700" />
-                  </div>
-                  <span className="text-xs font-black uppercase tracking-wider text-purple-950">
-                    AI Packaging & Clickability Breakdown
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-slate-500">Clickability Index:</span>
-                  <span className="px-3 py-1 rounded-full text-xs font-black bg-purple-100 text-purple-800 border border-purple-200">
-                    {videoResult.aiAnalysis.clickabilityScore}/100
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="p-4 rounded-2xl bg-purple-50/60 border border-purple-200/80 space-y-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-purple-800 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-                    Psychological Trigger
-                  </span>
-                  <p className="text-xs text-slate-700 leading-relaxed font-medium">
-                    {videoResult.aiAnalysis.psychologicalTrigger}
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 space-y-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
-                    <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
-                    A/B Improvement Angle
-                  </span>
-                  <p className="text-xs text-slate-700 leading-relaxed font-medium">
-                    {videoResult.aiAnalysis.improvementIdea}
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs text-slate-700 leading-relaxed">
-                <strong className="text-slate-900 font-bold">Title Critique & Verdict: </strong>
-                {videoResult.aiAnalysis.titleCritique}
-              </div>
-            </div>
-          )}
+          {/* Embedded AI Co-Pilot for Single Video */}
+          <div className="mt-6 pt-6 border-t border-slate-200/80">
+            <AiCopilotChat
+              toolName="Single Video Performance Breakdown"
+              contextData={{
+                tool: 'single_video_check',
+                video: {
+                  id: videoResult.videoId,
+                  title: videoResult.title,
+                  channel: videoResult.channelTitle,
+                  views: videoResult.views,
+                  channelMedian: videoResult.channelMedian,
+                  multiplier: videoResult.multiplier,
+                  isOutlier: videoResult.isOutlier,
+                },
+              }}
+              contextSummary={`Video: "${videoResult.title}" (${videoResult.views.toLocaleString()} views • ${videoResult.multiplier}x median)`}
+              suggestedPrompts={[
+                '🎯 Brainstorm 5 higher-CTR title variations for this topic',
+                '💡 How could the thumbnail be improved for stronger visual contrast?',
+                '🔍 What specific emotional trigger would attract high-intent viewers?',
+                '📊 Compare this video against its channel median baseline',
+              ]}
+              creditBalance={creditBalance}
+              onCreditDeducted={onCreditDeducted}
+              onInsufficientCredits={onInsufficientCredits}
+            />
+          </div>
         </div>
       )}
 
@@ -551,7 +542,7 @@ export function UniversalSearchBox({
                 </span>
               </div>
               <div className="px-4 py-2 rounded-2xl bg-emerald-50 border border-emerald-200 text-center">
-                <span className="text-[10px] uppercase font-bold text-emerald-600 block">Outliers Found</span>
+                <span className="text-[10px] uppercase font-bold text-emerald-600 block">Outliers Identified</span>
                 <span className="text-base font-black font-mono text-emerald-700">
                   {channelResult.totalOutliersFound}
                 </span>
@@ -559,136 +550,26 @@ export function UniversalSearchBox({
             </div>
           </div>
 
-          {/* PINNED AI DEEP DIVE CARD (#1 OUTLIER) */}
-          {channelResult.aiAnalysis && channelResult.topOutlier && (
-            <div className="bg-gradient-to-br from-purple-900 to-indigo-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-
-              <div className="relative z-10 space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-white/10">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-purple-500/30 flex items-center justify-center">
-                      <Brain className="w-4 h-4 text-purple-300" />
-                    </div>
-                    <span className="text-xs font-black uppercase tracking-wider text-purple-200">
-                      Comprehensive AI Outlier Deconstruction • Top Performer ({channelResult.topOutlier.multiplier}x)
-                    </span>
-                  </div>
-                  <span className="text-xs text-purple-300/80 italic line-clamp-1 max-w-sm">
-                    "{channelResult.topOutlier.title}"
-                  </span>
-                </div>
-
-                {/* 5 Core Pillars */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
-                      <Sparkles className="w-3 h-3 text-purple-400" />
-                      1. Curiosity Gap
-                    </span>
-                    <p className="text-xs text-purple-100 leading-relaxed">
-                      {channelResult.aiAnalysis.curiosityGap}
-                    </p>
-                  </div>
-
-                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
-                      <Flame className="w-3 h-3 text-rose-400" />
-                      2. Emotional Trigger
-                    </span>
-                    <p className="text-xs text-purple-100 leading-relaxed">
-                      {channelResult.aiAnalysis.emotionalTrigger}
-                    </p>
-                  </div>
-
-                  <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-purple-300 flex items-center gap-1.5">
-                      <Zap className="w-3 h-3 text-amber-400" />
-                      3. Hook Strategy
-                    </span>
-                    <p className="text-xs text-purple-100 leading-relaxed">
-                      {channelResult.aiAnalysis.hookStrategy}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Additional Packaging & Retention Dimensions */}
-                {(channelResult.aiAnalysis.thumbnailPackaging || channelResult.aiAnalysis.retentionDriver) && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-                    {channelResult.aiAnalysis.thumbnailPackaging && (
-                      <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-300 flex items-center gap-1.5">
-                          <Eye className="w-3 h-3 text-cyan-400" />
-                          4. Thumbnail Packaging & Visual Contrast
-                        </span>
-                        <p className="text-xs text-purple-100 leading-relaxed">
-                          {channelResult.aiAnalysis.thumbnailPackaging}
-                        </p>
-                      </div>
-                    )}
-                    {channelResult.aiAnalysis.retentionDriver && (
-                      <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-1.5">
-                          <Clock className="w-3 h-3 text-emerald-400" />
-                          5. Retention & Pacing Driver
-                        </span>
-                        <p className="text-xs text-purple-100 leading-relaxed">
-                          {channelResult.aiAnalysis.retentionDriver}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Swipeable Replication Playbook (AI Title Formulas) */}
-                {channelResult.aiAnalysis.replicationPlaybook && channelResult.aiAnalysis.replicationPlaybook.length > 0 && (
-                  <div className="p-4 rounded-2xl bg-purple-950/60 border border-purple-400/20 space-y-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
-                      <Zap className="w-3 h-3 text-amber-400" />
-                      Replication Playbook • 3 Swipeable Title Formulas
-                    </span>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-1">
-                      {channelResult.aiAnalysis.replicationPlaybook.map((formula, idx) => (
-                        <div key={idx} className="p-3 rounded-xl bg-white/10 border border-white/10 text-xs font-mono text-purple-100 flex items-start gap-2">
-                          <span className="w-5 h-5 rounded-full bg-purple-500/40 text-purple-200 font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">
-                            {idx + 1}
-                          </span>
-                          <span className="leading-snug">{formula}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Summary Quote */}
-                <div className="p-3.5 rounded-xl bg-purple-500/20 border border-purple-400/20 text-xs text-purple-200 flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-purple-300 shrink-0 mt-0.5" />
-                  <span className="font-medium">
-                    <strong className="text-white">Growth Takeaway: </strong>
-                    {channelResult.aiAnalysis.summary}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* OUTLIER VIDEOS CATALOG GRID */}
+          {/* TOP 10 CHANNEL UPLOADS CATALOG */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Flame className="w-4 h-4 text-rose-600" />
-                <span>Top Performing Outlier Uploads</span>
+              <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                <Flame className="w-5 h-5 text-rose-600" />
+                <span>Top 10 Channel Uploads (Ranked by Multiplier & Views)</span>
               </h3>
-              <span className="text-xs text-slate-400 font-medium">
-                Filtered vs {channelResult.channel.medianViews.toLocaleString()} median views
+              <span className="text-xs text-slate-500 font-medium">
+                Baseline: {channelResult.channel.medianViews.toLocaleString()} median views
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {channelResult.outliers.map((video) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(channelResult.topVideos && channelResult.topVideos.length > 0
+                ? channelResult.topVideos
+                : channelResult.outliers
+              ).slice(0, 10).map((video, idx) => (
                 <div
                   key={video.id}
-                  className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between group"
+                  className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-xs hover:border-purple-300 hover:shadow-md transition-all flex flex-col justify-between group"
                 >
                   <div className="relative aspect-video bg-slate-100 overflow-hidden">
                     <img
@@ -696,10 +577,15 @@ export function UniversalSearchBox({
                       alt={video.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
+                    <div className="absolute top-2.5 left-2.5">
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-black font-mono bg-slate-900/80 text-white backdrop-blur-xs">
+                        #{idx + 1}
+                      </span>
+                    </div>
                     <div className="absolute top-2.5 right-2.5">
                       <span
                         className={`px-2.5 py-1 rounded-md text-[11px] font-black font-mono uppercase tracking-wider shadow-sm flex items-center gap-1 ${
-                          video.multiplier >= 3.0
+                          video.multiplier >= 2.0
                             ? 'bg-emerald-600 text-white'
                             : 'bg-slate-900/80 text-white backdrop-blur-xs'
                         }`}
@@ -735,6 +621,26 @@ export function UniversalSearchBox({
               ))}
             </div>
           </div>
+
+          {/* EMBEDDED CONVERSATIONAL AI CO-PILOT CHATBOX */}
+          <AiCopilotChat
+            toolName={`Channel Audit: ${channelResult.channel.title}`}
+            contextData={{
+              tool: 'channel_audit',
+              channel: channelResult.channel,
+              top10Videos: (channelResult.topVideos || channelResult.outliers).slice(0, 10),
+            }}
+            contextSummary={`Auditing ${channelResult.channel.title} • Top 10 uploads loaded in memory`}
+            suggestedPrompts={[
+              '🎯 Brainstorm 5 viral titles mixing the angles of video #1 and #2',
+              '🔍 Extract the most repeated keywords across these top 10 titles',
+              '📊 Calculate the view drop-off percentage between video #1 and #10',
+              '💡 What made the #1 video outperform the channel baseline by this multiplier?',
+            ]}
+            creditBalance={creditBalance}
+            onCreditDeducted={onCreditDeducted}
+            onInsufficientCredits={onInsufficientCredits}
+          />
         </div>
       )}
 

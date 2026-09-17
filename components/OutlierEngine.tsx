@@ -8,6 +8,7 @@ import {
   QueryConfirmationDetails,
   isConfirmationSkipped,
 } from '@/components/QueryConfirmationModal';
+import { AiCopilotChat } from '@/components/AiCopilotChat';
 
 interface OutlierEngineProps {
   creditBalance: number;
@@ -332,6 +333,33 @@ export function OutlierEngine({
               </div>
             </div>
           )}
+
+          {/* Embedded AI Co-Pilot */}
+          <AiCopilotChat
+            toolName={`Outlier Engine: "${result.title}"`}
+            contextData={{
+              tool: 'outlier_calc',
+              video: {
+                title: result.title,
+                channel: result.channelTitle,
+                views: result.targetViews,
+                channelMedian: result.channelMedian,
+                multiplier: result.multiplier,
+                isOutlier: result.isOutlier,
+                recentViewsSample: result.recentViewsSample,
+              },
+            }}
+            contextSummary={`Outlier Analysis: "${result.title}" (${result.multiplier}x median views)`}
+            suggestedPrompts={[
+              '🎯 How can I borrow this video formula for a different niche?',
+              '📊 Calculate how many standard deviations above median this upload is',
+              '🔍 What curiosity gap made this video outperform the channel baseline?',
+              '💡 Write 5 viral title hooks leveraging this exact packaging pattern',
+            ]}
+            creditBalance={creditBalance}
+            onCreditDeducted={onCreditDeducted}
+            onInsufficientCredits={onInsufficientCredits}
+          />
         </div>
       )}
 

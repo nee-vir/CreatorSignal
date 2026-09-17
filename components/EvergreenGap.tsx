@@ -9,6 +9,7 @@ import {
   QueryConfirmationDetails,
   isConfirmationSkipped,
 } from '@/components/QueryConfirmationModal';
+import { AiCopilotChat } from '@/components/AiCopilotChat';
 
 interface EvergreenGapProps {
   creditBalance: number;
@@ -277,6 +278,34 @@ export function EvergreenGap({
               ))}
             </div>
           )}
+
+          {/* Embedded AI Co-Pilot */}
+          <AiCopilotChat
+            toolName={`Evergreen Gap Radar: ${channelId}`}
+            contextData={{
+              tool: 'evergreen_gap',
+              channelId: channelId,
+              opportunities: opportunities.map((o) => ({
+                id: o.videoId,
+                title: o.title,
+                totalViews: o.totalViews,
+                daysAgo: o.daysAgo,
+                estimatedVph: o.estimatedVph,
+                opportunityScore: o.opportunityScore,
+                recommendation: o.recommendation,
+              })),
+            }}
+            contextSummary={`Discovered ${opportunities.length} evergreen remake targets for ${channelId}`}
+            suggestedPrompts={[
+              '🎯 How can I modernize the #1 opportunity title for 2026 audiences?',
+              '📊 Calculate the combined daily views these older videos are still pulling',
+              '🔍 What content angles or advancements are missing from these aging uploads?',
+              '💡 Give me 3 script hook intros to outperform the highest-ranking video here',
+            ]}
+            creditBalance={creditBalance}
+            onCreditDeducted={onCreditDeducted}
+            onInsufficientCredits={onInsufficientCredits}
+          />
         </div>
       )}
 
