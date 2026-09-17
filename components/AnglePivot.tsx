@@ -166,46 +166,31 @@ export function AnglePivot({
 
       {/* AI Angle & Hook Strategy Chatbox Hero */}
       {angles && (
-        <div className="space-y-4">
-          {/* Sleek Concept Summary Pill */}
-          <div className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
-                Concept Analyzed: "{videoTitle}"
-              </h3>
-              <p className="text-[11px] text-slate-500 font-medium">
-                Contrarian, Resource Blueprint, and Mistake angles loaded in memory
-              </p>
-            </div>
-            <span className="px-2.5 py-1 rounded-xl text-xs font-mono font-bold bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
-              3 Angles Ready
-            </span>
-          </div>
-
-          {/* Embedded AI Co-Pilot - The Hero */}
+        <div className="animate-in fade-in slide-in-from-bottom-2">
           <AiCopilotChat
+            key={`angle-${videoTitle}`}
             toolName={`Hook & Angle Pivot: "${videoTitle}"`}
-              contextData={{
-                tool: 'angle_pivot',
-                videoTitle: videoTitle,
-                generatedAngles: angles.map((a) => ({
-                  type: a.type,
-                  title: a.title,
-                  trigger: a.trigger,
-                  openingScript: a.openingScript,
-                })),
-              }}
-              contextSummary={`Refining 3 psychological angles for "${videoTitle}"`}
-              suggestedPrompts={[
-                '🎯 Expand the opening script for Angle #1 into the first 60 seconds',
-                '💡 Give me 5 thumbnail image concepts to match Angle #2',
-                '🔤 Write a shorter, punchier variant of the title for Angle #3',
-                '🔍 Which of these 3 angles has the lowest audience bounce risk?',
-              ]}
-              creditBalance={creditBalance}
-              onCreditDeducted={onCreditDeducted}
-              onInsufficientCredits={onInsufficientCredits}
-            />
+            contextData={{
+              tool: 'angle_pivot',
+              videoTitle: videoTitle,
+              generatedAngles: angles.map((a) => ({
+                type: a.type,
+                title: a.title,
+                trigger: a.trigger,
+                openingScript: a.openingScript,
+              })),
+            }}
+            contextSummary={`Refining 3 psychological angles for "${videoTitle}"`}
+            suggestedPrompts={[
+              '🎯 Expand the opening script for Angle #1 into the first 60 seconds',
+              '💡 Give me 5 thumbnail image concepts to match Angle #2',
+              '🔤 Write a shorter, punchier variant of the title for Angle #3',
+              '🔍 Which of these 3 angles has the lowest audience bounce risk?',
+            ]}
+            creditBalance={creditBalance}
+            onCreditDeducted={onCreditDeducted}
+            onInsufficientCredits={onInsufficientCredits}
+          />
         </div>
       )}
 

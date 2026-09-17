@@ -382,51 +382,11 @@ export function UniversalSearchBox({
         </div>
       </div>
 
-      {/* SINGLE VIDEO RESULT HERO */}
+      {/* SINGLE VIDEO RESULT: DIRECT CHATBOX HERO */}
       {videoResult && (
-        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
-          {/* Sleek Minimalist Target Header Pill */}
-          <div className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-16 h-10 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
-                <img
-                  src={videoResult.thumbnail}
-                  alt={videoResult.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
-                  {videoResult.title}
-                </h3>
-                <p className="text-[11px] text-slate-500 font-medium">
-                  {videoResult.channelTitle} • {videoResult.views.toLocaleString()} views
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <span
-                className={`px-2.5 py-1 rounded-xl text-xs font-mono font-bold ${
-                  videoResult.isOutlier
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-slate-100 text-slate-700'
-                }`}
-              >
-                {videoResult.multiplier}x median
-              </span>
-              <a
-                href={`https://youtube.com/watch?v=${videoResult.videoId}`}
-                target="_blank"
-                rel="noreferrer"
-                className="text-slate-400 hover:text-rose-600 transition-colors"
-              >
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
-
-          {/* Embedded Conversational AI Co-Pilot Chatbox */}
+        <div className="animate-in fade-in slide-in-from-bottom-2">
           <AiCopilotChat
+            key={`video-${videoResult.videoId}`}
             toolName="Single Video Performance Breakdown"
             contextData={{
               tool: 'single_video_check',
@@ -438,6 +398,7 @@ export function UniversalSearchBox({
                 channelMedian: videoResult.channelMedian,
                 multiplier: videoResult.multiplier,
                 isOutlier: videoResult.isOutlier,
+                thumbnail: videoResult.thumbnail,
               },
             }}
             contextSummary={`Video: "${videoResult.title}" (${videoResult.views.toLocaleString()} views • ${videoResult.multiplier}x median)`}
@@ -454,48 +415,18 @@ export function UniversalSearchBox({
         </div>
       )}
 
-      {/* DEEP CHANNEL OUTLIER AUDIT VIEW */}
+      {/* DEEP CHANNEL OUTLIER AUDIT: DIRECT CHATBOX HERO */}
       {channelResult && (
-        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
-          {/* Sleek Minimalist Channel Header Pill */}
-          <div className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
-              {channelResult.channel.avatarUrl && (
-                <img
-                  src={channelResult.channel.avatarUrl}
-                  alt={channelResult.channel.title}
-                  className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0"
-                />
-              )}
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
-                    {channelResult.channel.title}
-                  </h3>
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-rose-50 text-rose-700 border border-rose-200">
-                    AUDITED
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-500 font-medium">
-                  {channelResult.channel.subscriberCount.toLocaleString()} subscribers • Median baseline: {channelResult.channel.medianViews.toLocaleString()} views
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="px-2.5 py-1 rounded-xl text-xs font-mono font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                Top 10 Uploads Loaded
-              </span>
-            </div>
-          </div>
-
-          {/* EMBEDDED CONVERSATIONAL AI CO-PILOT CHATBOX */}
+        <div className="animate-in fade-in slide-in-from-bottom-2">
           <AiCopilotChat
+            key={`channel-${channelResult.channel.id || channelResult.channel.title}`}
             toolName={`Channel Audit: ${channelResult.channel.title}`}
             contextData={{
               tool: 'channel_audit',
               channel: channelResult.channel,
               top10Videos: (channelResult.topVideos || channelResult.outliers).slice(0, 10),
+              totalOutliersFound: channelResult.totalOutliersFound,
+              topOutlier: channelResult.topOutlier,
             }}
             contextSummary={`Auditing ${channelResult.channel.title} • Top 10 uploads loaded in memory`}
             suggestedPrompts={[

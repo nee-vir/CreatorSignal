@@ -172,79 +172,36 @@ export function OutlierEngine({
         )}
       </div>
 
-      {/* Results Section */}
+      {/* Results Section: Direct Chatbox Hero */}
       {result && (
-        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
-            <div>
-              <span className="text-xs font-mono uppercase tracking-wider text-slate-400">Analyzed Video</span>
-              <h3 className="text-xl font-bold text-slate-900 mt-1">{result.videoTitle}</h3>
-              <p className="text-sm text-slate-500">
-                Channel: <span className="text-slate-800 font-semibold">{result.channelTitle}</span>
-              </p>
-            </div>
-
-            {/* Outlier Badge */}
-            <div>
-              {result.isOutlier ? (
-                <div
-                  id="outlier-badge-active"
-                  className="px-5 py-2.5 rounded-2xl bg-amber-50 border-2 border-amber-300 flex items-center gap-2.5 shadow-sm"
-                >
-                  <Flame className="w-6 h-6 text-amber-600 animate-bounce" />
-                  <div>
-                    <div className="text-base font-black text-amber-900">
-                      {result.outlierMultiplier}x Viral Outlier!
-                    </div>
-                    <div className="text-[10px] text-amber-700 uppercase font-bold tracking-wider">
-                      ⭐ HIGH DEMAND TOPIC - MAKE A VIDEO ON THIS!
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="px-4 py-2 rounded-2xl bg-slate-100 border border-slate-200 flex items-center gap-2">
-                  <BarChart2 className="w-4 h-4 text-slate-500" />
-                  <div>
-                    <div className="text-sm font-bold text-slate-800">
-                      {result.outlierMultiplier}x Normal Performance
-                    </div>
-                    <div className="text-[10px] text-slate-500 uppercase font-semibold">
-                      Standard Channel Baseline
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Embedded AI Co-Pilot - The Hero */}
-          <div className="pt-4 border-t border-slate-100">
-            <AiCopilotChat
-              toolName={`Outlier Engine: "${result.title}"`}
-              contextData={{
-                tool: 'outlier_calc',
-                video: {
-                  title: result.title,
-                  channel: result.channelTitle,
-                  views: result.targetViews,
-                  channelMedian: result.channelMedian,
-                  multiplier: result.multiplier,
-                  isOutlier: result.isOutlier,
-                  recentViewsSample: result.recentViewsSample,
-                },
-              }}
-              contextSummary={`Outlier Analysis: "${result.title}" (${result.multiplier}x median views)`}
-              suggestedPrompts={[
-                '🎯 How can I borrow this video formula for a different niche?',
-                '📊 Calculate how many standard deviations above median this upload is',
-                '🔍 What curiosity gap made this video outperform the channel baseline?',
-                '💡 Write 5 viral title hooks leveraging this exact packaging pattern',
-              ]}
-              creditBalance={creditBalance}
-              onCreditDeducted={onCreditDeducted}
-              onInsufficientCredits={onInsufficientCredits}
-            />
-          </div>
+        <div className="animate-in fade-in slide-in-from-bottom-2">
+          <AiCopilotChat
+            key={`outlier-${result.videoTitle || result.title}-${result.outlierMultiplier || result.multiplier}`}
+            toolName={`Outlier Engine: "${result.videoTitle || result.title}"`}
+            contextData={{
+              tool: 'outlier_calc',
+              video: {
+                title: result.videoTitle || result.title,
+                channel: result.channelTitle,
+                views: result.targetViews,
+                channelMedian: result.channelMedian,
+                multiplier: result.outlierMultiplier || result.multiplier,
+                isOutlier: result.isOutlier,
+                recentViewsSample: result.recentViewsSample,
+                aiAnalysis: result.aiAnalysis,
+              },
+            }}
+            contextSummary={`Outlier Analysis: "${result.videoTitle || result.title}" (${result.outlierMultiplier || result.multiplier}x median views)`}
+            suggestedPrompts={[
+              '🎯 How can I borrow this video formula for a different niche?',
+              '📊 Calculate how many standard deviations above median this upload is',
+              '🔍 What curiosity gap made this video outperform the channel baseline?',
+              '💡 Write 5 viral title hooks leveraging this exact packaging pattern',
+            ]}
+            creditBalance={creditBalance}
+            onCreditDeducted={onCreditDeducted}
+            onInsufficientCredits={onInsufficientCredits}
+          />
         </div>
       )}
 

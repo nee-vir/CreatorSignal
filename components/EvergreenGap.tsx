@@ -165,26 +165,11 @@ export function EvergreenGap({
         )}
       </div>
 
-      {/* Results Grid */}
+      {/* Results Section: Direct Chatbox Hero */}
       {opportunities && (
-        <div className="space-y-4">
-          {/* Sleek Channel Summary Pill */}
-          <div className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
-                Evergreen Topic Radar: {channelId}
-              </h3>
-              <p className="text-[11px] text-slate-500 font-medium">
-                {opportunities.length} active evergreen topics identified with sustained search velocity
-              </p>
-            </div>
-            <span className="px-2.5 py-1 rounded-xl text-xs font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-              {opportunities.length} Evergreen Topics Loaded
-            </span>
-          </div>
-
-          {/* Embedded AI Co-Pilot - The Hero */}
+        <div className="animate-in fade-in slide-in-from-bottom-2">
           <AiCopilotChat
+            key={`evergreen-${channelId}`}
             toolName={`Evergreen Gap Radar: ${channelId}`}
             contextData={{
               tool: 'evergreen_gap',
