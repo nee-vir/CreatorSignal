@@ -107,3 +107,4 @@ Open [http://localhost:3000](http://localhost:3000) to access the studio.
 
 ## 📄 License
 MIT License. Built for YouTube creators and growth strategists.
+# CreatorSignal
