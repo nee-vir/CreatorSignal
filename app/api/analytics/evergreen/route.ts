@@ -4,6 +4,10 @@ import { deductCredits, CREDIT_COSTS, InsufficientCreditsError } from '@/lib/cre
 import { findEvergreenOpportunities } from '@/lib/analytics/evergreen';
 import { generateWithGeminiFallback } from '@/lib/gemini';
 
+import { parseYouTubeInput } from '@/lib/youtube-parser';
+import { resolveChannelIdentifier } from '@/lib/youtube/resolve-channel';
+import { getVideoDetails } from '@/lib/youtube/cache';
+
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
@@ -12,9 +16,9 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { channelId } = body;
 
-    if (!channelId || typeof channelId !== 'string') {
+    if (!channelId || typeof channelId !== 'string' || !channelId.trim()) {
       return NextResponse.json(
-        { error: 'Please provide a valid YouTube Channel ID.' },
+        { error: 'Please provide a valid YouTube channel link, handle (@creator), or channel ID.' },
         { status: 400 }
       );
     }
@@ -26,8 +30,44 @@ export async function POST(request: Request) {
       'outlier_calc'
     );
 
-    // 2. Scan channel for evergreen winners
-    const opportunities = await findEvergreenOpportunities(channelId.trim());
+    // 2. Resolve YouTube handle/URL to canonical channel ID
+    const rawChannel = channelId.trim();
+    const parsed = parseYouTubeInput(rawChannel);
+
+    let resolvedChannelId = rawChannel;
+    let displayChannelName = rawChannel;
+
+    if (parsed.type === 'channel') {
+      try {
+        const channel = await resolveChannelIdentifier(parsed.identifier, parsed.identifierType);
+        resolvedChannelId = channel.channelId;
+        displayChannelName = channel.title || `@${parsed.identifier}`;
+      } catch (err) {
+        console.warn('[Evergreen] resolveChannelIdentifier failed:', err);
+      }
+    } else if (parsed.type === 'video') {
+      try {
+        const vidDetails = await getVideoDetails([parsed.id]);
+        const chId = vidDetails.data.items?.[0]?.snippet?.channelId;
+        if (chId) {
+          resolvedChannelId = chId;
+          displayChannelName = vidDetails.data.items?.[0]?.snippet?.channelTitle || chId;
+        }
+      } catch (err) {
+        console.warn('[Evergreen] getVideoDetails channel extraction failed:', err);
+      }
+    } else {
+      try {
+        const channel = await resolveChannelIdentifier(rawChannel.replace(/^@/, ''), 'handle');
+        resolvedChannelId = channel.channelId;
+        displayChannelName = channel.title || `@${rawChannel}`;
+      } catch (err) {
+        console.warn('[Evergreen] handle fallback failed:', err);
+      }
+    }
+
+    // 3. Scan channel for evergreen winners
+    const opportunities = await findEvergreenOpportunities(resolvedChannelId);
 
     // 3. Live Gemini AI Evergreen Remake Synthesis
     let aiSynthesis: any = null;

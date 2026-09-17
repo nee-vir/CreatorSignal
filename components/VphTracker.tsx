@@ -221,6 +221,18 @@ export function VphTracker({
           </button>
         </form>
 
+        {/* Quick test suggestion */}
+        <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
+          <span>Need a test video? Try:</span>
+          <button
+            type="button"
+            onClick={() => setVideoUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ')}
+            className="text-rose-600 font-medium hover:underline"
+          >
+            Never Gonna Give You Up (dQw4w9WgXcQ)
+          </button>
+        </div>
+
         {error && (
           <div className="mt-4 p-4 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-3 text-rose-700 text-sm">
             <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />

@@ -134,7 +134,7 @@ export function EvergreenGap({
           <input
             id="evergreen-channel-input"
             type="text"
-            placeholder="Enter competitor's YouTube Channel ID (e.g., UC_x5XG1OV2P6uZZ5FSM9Ttw)"
+            placeholder="Enter channel handle, link, or ID (e.g. @veritasium or youtube.com/@creator)"
             value={channelId}
             onChange={(e) => setChannelId(e.target.value)}
             className="flex-1 px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-rose-500 focus:bg-white"
@@ -153,6 +153,18 @@ export function EvergreenGap({
             <span>Scan Evergreen Videos</span>
           </button>
         </form>
+
+        {/* Quick test suggestion */}
+        <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
+          <span>Need a test channel? Try:</span>
+          <button
+            type="button"
+            onClick={() => setChannelId('@veritasium')}
+            className="text-rose-600 font-medium hover:underline"
+          >
+            @veritasium (16.8M subs)
+          </button>
+        </div>
 
         {error && (
           <div className="mt-4 p-4 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-3 text-rose-700 text-sm">

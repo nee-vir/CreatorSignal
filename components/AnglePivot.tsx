@@ -54,6 +54,9 @@ export function AnglePivot({
       }
 
       setAngles(data.angles || []);
+      if (data.originalTitle) {
+        setVideoTitle(data.originalTitle);
+      }
       if (typeof data.remainingCredits === 'number') {
         onCreditDeducted(data.remainingCredits);
       }
@@ -121,7 +124,7 @@ export function AnglePivot({
           <input
             id="angle-title-input"
             type="text"
-            placeholder="Paste any successful video title (e.g., 'How I Built a $10k/Month SaaS with Next.js')"
+            placeholder="Paste any YouTube video link or video title (e.g. 'How I Built a $10k/mo SaaS' or https://youtube.com/watch?v=...)"
             value={videoTitle}
             onChange={(e) => setVideoTitle(e.target.value)}
             className="flex-1 px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-purple-500 focus:bg-white"

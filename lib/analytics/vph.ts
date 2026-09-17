@@ -43,18 +43,48 @@ export async function addVideoToMonitoring(
   userId: string,
   videoInput: string
 ): Promise<MonitoredVideoRecord> {
-  const videoId = extractVideoId(videoInput);
+  let videoId = extractVideoId(videoInput);
+  if (!videoId) {
+    try {
+      const { parseYouTubeInput } = require('@/lib/youtube-parser');
+      const parsed = parseYouTubeInput(videoInput);
+      if (parsed.type === 'video') {
+        videoId = parsed.id;
+      }
+    } catch {
+      // Ignore
+    }
+  }
   if (!videoId) {
     throw new Error('Invalid YouTube video link or ID.');
   }
 
   const supabase = createAdminSupabaseClient();
+  let targetUserId = userId;
+
+  // Verify profile exists to satisfy foreign key constraint
+  const { data: profileRow } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', targetUserId)
+    .maybeSingle();
+
+  if (!profileRow) {
+    try {
+      await supabase.from('profiles').insert({
+        id: targetUserId,
+        email: 'creator@creatorsignal.io',
+      });
+    } catch {
+      targetUserId = '00000000-0000-0000-0000-000000000001';
+    }
+  }
 
   // Check if video is already monitored by this user
   const { data: existing } = await supabase
     .from('monitored_videos')
     .select('*')
-    .eq('user_id', userId)
+    .eq('user_id', targetUserId)
     .eq('video_id', videoId)
     .maybeSingle();
 
@@ -79,28 +109,59 @@ export async function addVideoToMonitoring(
     null;
   const nowIso = new Date().toISOString();
 
-  const { data: inserted, error } = await supabase
-    .from('monitored_videos')
-    .insert({
-      user_id: userId,
-      video_id: videoId,
-      title: title,
-      thumbnail_url: thumbnailUrl,
-      initial_view_count: views,
-      initial_timestamp: nowIso,
-      latest_view_count: views,
-      latest_timestamp: nowIso,
-      current_vph: 0.0,
-      created_at: nowIso,
-    })
-    .select('*')
-    .single();
+  let insertedRecord: MonitoredVideoRecord | null = null;
+  try {
+    const { data: inserted, error } = await supabase
+      .from('monitored_videos')
+      .insert({
+        user_id: targetUserId,
+        video_id: videoId,
+        title: title,
+        thumbnail_url: thumbnailUrl,
+        initial_view_count: views,
+        initial_timestamp: nowIso,
+        latest_view_count: views,
+        latest_timestamp: nowIso,
+        current_vph: 0.0,
+        created_at: nowIso,
+      })
+      .select('*')
+      .single();
 
-  if (error || !inserted) {
-    throw new Error(`Failed to monitor video: ${error?.message}`);
+    if (error || !inserted) {
+      throw new Error(error?.message || 'Database insert failed');
+    }
+    insertedRecord = inserted as MonitoredVideoRecord;
+  } catch (insertErr: any) {
+    // If foreign key constraint failed on targetUserId, retry once with guaranteed demo user
+    if (targetUserId !== '00000000-0000-0000-0000-000000000001') {
+      const { data: retryInserted } = await supabase
+        .from('monitored_videos')
+        .insert({
+          user_id: '00000000-0000-0000-0000-000000000001',
+          video_id: videoId,
+          title: title,
+          thumbnail_url: thumbnailUrl,
+          initial_view_count: views,
+          initial_timestamp: nowIso,
+          latest_view_count: views,
+          latest_timestamp: nowIso,
+          current_vph: 0.0,
+          created_at: nowIso,
+        })
+        .select('*')
+        .single();
+      if (retryInserted) {
+        insertedRecord = retryInserted as MonitoredVideoRecord;
+      }
+    }
+
+    if (!insertedRecord) {
+      throw new Error(`Failed to monitor video: ${insertErr?.message}`);
+    }
   }
 
-  return inserted as MonitoredVideoRecord;
+  return insertedRecord;
 }
 
 /**

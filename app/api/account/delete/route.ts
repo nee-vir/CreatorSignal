@@ -6,7 +6,10 @@ export const dynamic = 'force-dynamic';
 
 export async function DELETE(request: Request) {
   try {
-    const userId = await getAuthenticatedUserId(request);
+    const userId = await getAuthenticatedUserId(request, false);
+    if (userId === '00000000-0000-0000-0000-000000000001') {
+      return NextResponse.json({ error: 'Cannot delete demo guest account.' }, { status: 400 });
+    }
     const supabase = createAdminSupabaseClient();
 
     // 1. Delete associated data records

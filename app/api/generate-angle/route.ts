@@ -41,6 +41,9 @@ function generateFallbackAngles(originalTitle: string): AngleHook[] {
   ];
 }
 
+import { parseYouTubeInput } from '@/lib/youtube-parser';
+import { getVideoDetails } from '@/lib/youtube/cache';
+
 export async function POST(request: Request) {
   try {
     const userId = await getAuthenticatedUserId(request);
@@ -49,9 +52,24 @@ export async function POST(request: Request) {
 
     if (!videoTitle || typeof videoTitle !== 'string' || !videoTitle.trim()) {
       return NextResponse.json(
-        { error: 'Please provide a valid YouTube video title to analyze.' },
+        { error: 'Please provide a valid YouTube video title or link to analyze.' },
         { status: 400 }
       );
+    }
+
+    // Resolve URL to real title if user pasted a YouTube video link
+    let resolvedTitle = videoTitle.trim();
+    const parsedInput = parseYouTubeInput(resolvedTitle);
+    if (parsedInput.type === 'video') {
+      try {
+        const vidDetails = await getVideoDetails([parsedInput.id]);
+        const fetchedTitle = vidDetails.data.items?.[0]?.snippet?.title;
+        if (fetchedTitle) {
+          resolvedTitle = fetchedTitle;
+        }
+      } catch (err) {
+        console.warn('[AnglePivot] Could not fetch video title from URL:', err);
+      }
     }
 
     // 1. Deduct 10 credits using the existing deduction utility
@@ -67,7 +85,7 @@ export async function POST(request: Request) {
     // 2. Call Google Gemini API if key is available
     if (apiKey) {
       try {
-        const prompt = `You are an elite YouTube strategist. Analyze this successful competitor YouTube video title: "${videoTitle.trim()}".
+        const prompt = `You are an elite YouTube strategist. Analyze this successful competitor YouTube video title: "${resolvedTitle}".
 Generate exactly 3 unique psychological video hooks/angles for a creator to remake this topic from a fresh, non-copycat perspective.
 You must provide exactly these 3 angles:
 1. "Contrarian" (Challenges common assumptions or conventional wisdom)
@@ -104,7 +122,20 @@ Do not wrap in markdown quotes or extra commentary, return ONLY the raw JSON arr
           maxOutputTokens: 2000,
         });
 
-        angles = JSON.parse(rawText);
+        try {
+          const parsed = JSON.parse(rawText);
+          if (Array.isArray(parsed)) {
+            angles = parsed;
+          } else if (Array.isArray(parsed.angles)) {
+            angles = parsed.angles;
+          } else if (Array.isArray(parsed.hooks)) {
+            angles = parsed.hooks;
+          } else if (Array.isArray(parsed.data)) {
+            angles = parsed.data;
+          }
+        } catch (parseErr) {
+          console.warn('[AnglePivot] JSON parse warning on Gemini output:', parseErr);
+        }
       } catch (aiErr) {
         console.warn('[AnglePivot] Gemini fallback cascade exhausted, using intelligent fallback:', aiErr);
       }
@@ -112,13 +143,13 @@ Do not wrap in markdown quotes or extra commentary, return ONLY the raw JSON arr
 
     // Fallback if no API key or AI parsing failed
     if (angles.length === 0) {
-      angles = generateFallbackAngles(videoTitle.trim());
+      angles = generateFallbackAngles(resolvedTitle);
     }
 
     return NextResponse.json({
       success: true,
       remainingCredits: deduction.remainingBalance,
-      originalTitle: videoTitle.trim(),
+      originalTitle: resolvedTitle,
       angles,
     });
   } catch (error: any) {

@@ -22,7 +22,7 @@ export interface EvergreenVideoOpportunity {
  */
 export async function findEvergreenOpportunities(
   channelId: string,
-  minVphThreshold = 20
+  minVphThreshold = 15
 ): Promise<EvergreenVideoOpportunity[]> {
   // 1. Fetch channel's uploads (up to 50 videos)
   const uploadsRes = await getChannelUploads(channelId, 50);
@@ -30,16 +30,17 @@ export async function findEvergreenOpportunities(
 
   const now = new Date();
   const ONE_EIGHTY_DAYS_MS = 180 * 24 * 60 * 60 * 1000;
+  const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
 
-  // 2. Identify candidates published > 180 days ago
-  const olderCandidates: Array<{
+  // 2. Identify candidates published > 180 days ago (or > 90 days ago if uploads are frequent)
+  let olderCandidates: Array<{
     videoId: string;
     publishedAt: string;
     daysAgo: number;
   }> = [];
 
   for (const item of items) {
-    const videoId = typeof item.id === 'string' ? item.id : item.id.videoId;
+    const videoId = typeof item.id === 'string' ? item.id : item.id?.videoId;
     if (!videoId) continue;
 
     const publishedDate = new Date(item.snippet.publishedAt);
@@ -49,8 +50,27 @@ export async function findEvergreenOpportunities(
       olderCandidates.push({
         videoId,
         publishedAt: item.snippet.publishedAt,
-        daysAgo: Math.floor(ageMs / (1000 * 60 * 60 * 24)),
+        daysAgo: Math.max(1, Math.floor(ageMs / (1000 * 60 * 60 * 24))),
       });
+    }
+  }
+
+  // If strict 180-day filter yielded fewer than 3 candidates, include videos published > 90 days ago
+  if (olderCandidates.length < 3) {
+    for (const item of items) {
+      const videoId = typeof item.id === 'string' ? item.id : item.id?.videoId;
+      if (!videoId) continue;
+
+      const publishedDate = new Date(item.snippet.publishedAt);
+      const ageMs = now.getTime() - publishedDate.getTime();
+
+      if (ageMs >= NINETY_DAYS_MS && !olderCandidates.some((c) => c.videoId === videoId)) {
+        olderCandidates.push({
+          videoId,
+          publishedAt: item.snippet.publishedAt,
+          daysAgo: Math.max(1, Math.floor(ageMs / (1000 * 60 * 60 * 24))),
+        });
+      }
     }
   }
 
@@ -65,7 +85,7 @@ export async function findEvergreenOpportunities(
     (statsRes.data.items || []).map((item) => [item.id as string, item])
   );
 
-  const opportunities: EvergreenVideoOpportunity[] = [];
+  let opportunities: EvergreenVideoOpportunity[] = [];
 
   for (const candidate of olderCandidates) {
     const detail = statsMap.get(candidate.videoId);
@@ -77,32 +97,38 @@ export async function findEvergreenOpportunities(
     // Sustained velocity = totalViews / totalHours
     const sustainedVph = parseFloat((totalViews / Math.max(totalHours, 1)).toFixed(2));
 
-    if (sustainedVph >= minVphThreshold) {
-      let score = 'High';
-      if (sustainedVph >= 100) score = 'Exceptional';
-      else if (sustainedVph >= 50) score = 'Very High';
+    let score = 'High';
+    if (sustainedVph >= 100) score = 'Exceptional';
+    else if (sustainedVph >= 40) score = 'Very High';
+    else if (sustainedVph >= 15) score = 'High';
+    else score = 'Consistent';
 
-      const thumb =
-        detail.snippet.thumbnails.maxres?.url ||
-        detail.snippet.thumbnails.high?.url ||
-        detail.snippet.thumbnails.medium?.url ||
-        detail.snippet.thumbnails.default?.url ||
-        '';
+    const thumb =
+      detail.snippet.thumbnails.maxres?.url ||
+      detail.snippet.thumbnails.high?.url ||
+      detail.snippet.thumbnails.medium?.url ||
+      detail.snippet.thumbnails.default?.url ||
+      '';
 
-      opportunities.push({
-        videoId: candidate.videoId,
-        title: detail.snippet.title,
-        publishedAt: candidate.publishedAt,
-        daysAgo: candidate.daysAgo,
-        totalViews,
-        estimatedVph: sustainedVph,
-        thumbnailUrl: thumb,
-        opportunityScore: score,
-        recommendation: `Published ${candidate.daysAgo} days ago and still drawing ~${sustainedVph} views/hr. Remake this topic with updated modern tools, cleaner visuals, and a 2026 perspective to capture this search traffic.`,
-      });
-    }
+    opportunities.push({
+      videoId: candidate.videoId,
+      title: detail.snippet.title,
+      publishedAt: candidate.publishedAt,
+      daysAgo: candidate.daysAgo,
+      totalViews,
+      estimatedVph: sustainedVph,
+      thumbnailUrl: thumb,
+      opportunityScore: score,
+      recommendation: `Published ${candidate.daysAgo} days ago and still drawing ~${sustainedVph} views/hr. Remake this topic with updated modern tools, cleaner visuals, and a 2026 perspective to capture this search traffic.`,
+    });
+  }
+
+  // Filter for minimum threshold, but if none meet threshold (smaller channel), keep top performers
+  let filtered = opportunities.filter((o) => o.estimatedVph >= minVphThreshold);
+  if (filtered.length === 0 && opportunities.length > 0) {
+    filtered = opportunities.slice(0, 10);
   }
 
   // Sort opportunities by highest velocity
-  return opportunities.sort((a, b) => b.estimatedVph - a.estimatedVph);
+  return filtered.sort((a, b) => b.estimatedVph - a.estimatedVph);
 }

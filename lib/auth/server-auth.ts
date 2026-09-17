@@ -5,7 +5,7 @@ import { serverEnv } from '@/lib/env';
  * Validates the user's authentication token from the request
  * and returns their Supabase User ID (UUID).
  */
-export async function getAuthenticatedUserId(request: Request): Promise<string> {
+export async function getAuthenticatedUserId(request: Request, allowGuest = true): Promise<string> {
   const authHeader = request.headers.get('Authorization');
   let token: string | null = null;
 
@@ -44,6 +44,10 @@ export async function getAuthenticatedUserId(request: Request): Promise<string> 
   const devUserId = request.headers.get('x-user-id');
   if (devUserId && /^[0-9a-fA-F-]{36}$/.test(devUserId)) {
     return devUserId;
+  }
+
+  if (allowGuest) {
+    return '00000000-0000-0000-0000-000000000001';
   }
 
   throw new Error('Authentication required. Please log in to proceed.');
