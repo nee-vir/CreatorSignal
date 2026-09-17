@@ -217,149 +217,34 @@ export function OutlierEngine({
             </div>
           </div>
 
-          {/* 3 Metric Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-              <span className="text-xs text-slate-500 font-medium">This Video's Views</span>
-              <div className="text-2xl font-black text-slate-900 mt-1">
-                {result.targetViews.toLocaleString()}
-              </div>
-              <span className="text-[11px] text-slate-400">Live view snapshot</span>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-              <span className="text-xs text-slate-500 font-medium">Channel's Normal Average</span>
-              <div className="text-2xl font-black text-slate-800 mt-1">
-                {result.channelMedianViews.toLocaleString()}
-              </div>
-              <span className="text-[11px] text-slate-400">
-                Typical views across last {result.recentUploadCount} uploads
-              </span>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-              <span className="text-xs text-slate-500 font-medium">The Multiplier</span>
-              <div className="text-sm font-mono text-slate-600 mt-1">
-                {result.targetViews.toLocaleString()} ÷ {result.channelMedianViews.toLocaleString()}
-              </div>
-              <div className="text-xl font-bold text-rose-600 mt-1">
-                = {result.outlierMultiplier}x more views than usual
-              </div>
-            </div>
+          {/* Embedded AI Co-Pilot - The Hero */}
+          <div className="pt-4 border-t border-slate-100">
+            <AiCopilotChat
+              toolName={`Outlier Engine: "${result.title}"`}
+              contextData={{
+                tool: 'outlier_calc',
+                video: {
+                  title: result.title,
+                  channel: result.channelTitle,
+                  views: result.targetViews,
+                  channelMedian: result.channelMedian,
+                  multiplier: result.multiplier,
+                  isOutlier: result.isOutlier,
+                  recentViewsSample: result.recentViewsSample,
+                },
+              }}
+              contextSummary={`Outlier Analysis: "${result.title}" (${result.multiplier}x median views)`}
+              suggestedPrompts={[
+                '🎯 How can I borrow this video formula for a different niche?',
+                '📊 Calculate how many standard deviations above median this upload is',
+                '🔍 What curiosity gap made this video outperform the channel baseline?',
+                '💡 Write 5 viral title hooks leveraging this exact packaging pattern',
+              ]}
+              creditBalance={creditBalance}
+              onCreditDeducted={onCreditDeducted}
+              onInsufficientCredits={onInsufficientCredits}
+            />
           </div>
-
-          {/* AI Comprehensive Outlier Breakdown Card */}
-          {result.aiAnalysis && (
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-indigo-950 text-white shadow-md space-y-4">
-              <div className="flex items-center justify-between gap-3 pb-3 border-b border-white/10">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-xl bg-purple-500/30 flex items-center justify-center">
-                    <Brain className="w-4 h-4 text-purple-300" />
-                  </div>
-                  <span className="text-xs font-black uppercase tracking-wider text-purple-200">
-                    AI Viral Outlier Synthesis
-                  </span>
-                </div>
-                <span className="px-3 py-1 rounded-full text-xs font-black bg-purple-500/30 text-purple-200 border border-purple-400/30">
-                  {result.aiAnalysis.verdict}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-rose-300 flex items-center gap-1.5">
-                    <Sparkles className="w-3 h-3 text-rose-400" />
-                    Why It Outperformed
-                  </span>
-                  <p className="text-xs text-slate-200 leading-relaxed font-medium">
-                    {result.aiAnalysis.whyItWorked}
-                  </p>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-300 flex items-center gap-1.5">
-                    <TrendingUp className="w-3 h-3 text-cyan-400" />
-                    Audience Resonance
-                  </span>
-                  <p className="text-xs text-slate-200 leading-relaxed font-medium">
-                    {result.aiAnalysis.audienceAppeal}
-                  </p>
-                </div>
-              </div>
-
-              {result.aiAnalysis.actionableAngle && (
-                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-400/20 text-xs flex items-start gap-2.5">
-                  <Zap className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold text-amber-300 uppercase tracking-wider text-[10px] block mb-0.5">
-                      Swipeable Topic Angle for Your Next Video:
-                    </span>
-                    <span className="font-mono text-white text-xs font-semibold">
-                      "{result.aiAnalysis.actionableAngle}"
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Visual Bar Breakdown */}
-          {result.recentViewsSample && result.recentViewsSample.length > 0 && (
-            <div className="pt-4 border-t border-slate-100">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
-                How this video compares to the channel's other recent uploads:
-              </h4>
-              <div className="space-y-2">
-                {result.recentViewsSample.map((views: number, idx: number) => {
-                  const percentOfTarget = Math.min(
-                    Math.round((views / Math.max(result.targetViews, 1)) * 100),
-                    100
-                  );
-                  return (
-                    <div key={idx} className="flex items-center gap-3 text-xs">
-                      <span className="w-20 font-mono text-slate-500">Recent #{idx + 1}</span>
-                      <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                        <div
-                          className="h-full bg-slate-400 rounded-full transition-all duration-500"
-                          style={{ width: `${Math.max(percentOfTarget, 4)}%` }}
-                        />
-                      </div>
-                      <span className="w-24 text-right font-mono text-slate-700 font-medium">
-                        {views.toLocaleString()} views
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Embedded AI Co-Pilot */}
-          <AiCopilotChat
-            toolName={`Outlier Engine: "${result.title}"`}
-            contextData={{
-              tool: 'outlier_calc',
-              video: {
-                title: result.title,
-                channel: result.channelTitle,
-                views: result.targetViews,
-                channelMedian: result.channelMedian,
-                multiplier: result.multiplier,
-                isOutlier: result.isOutlier,
-                recentViewsSample: result.recentViewsSample,
-              },
-            }}
-            contextSummary={`Outlier Analysis: "${result.title}" (${result.multiplier}x median views)`}
-            suggestedPrompts={[
-              '🎯 How can I borrow this video formula for a different niche?',
-              '📊 Calculate how many standard deviations above median this upload is',
-              '🔍 What curiosity gap made this video outperform the channel baseline?',
-              '💡 Write 5 viral title hooks leveraging this exact packaging pattern',
-            ]}
-            creditBalance={creditBalance}
-            onCreditDeducted={onCreditDeducted}
-            onInsufficientCredits={onInsufficientCredits}
-          />
         </div>
       )}
 

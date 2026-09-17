@@ -382,243 +382,110 @@ export function UniversalSearchBox({
         </div>
       </div>
 
-      {/* SINGLE VIDEO RESULT CARD */}
+      {/* SINGLE VIDEO RESULT HERO */}
       {videoResult && (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm animate-in fade-in slide-in-from-bottom-2">
-          <div className="flex items-center justify-between pb-4 mb-6 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
-                Single Video Baseline Check
-              </span>
-              <span className="text-xs text-slate-400">•</span>
-              <span className="text-xs font-bold text-slate-700">{videoResult.channelTitle}</span>
+        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+          {/* Sleek Minimalist Target Header Pill */}
+          <div className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-16 h-10 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
+                <img
+                  src={videoResult.thumbnail}
+                  alt={videoResult.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                  {videoResult.title}
+                </h3>
+                <p className="text-[11px] text-slate-500 font-medium">
+                  {videoResult.channelTitle} • {videoResult.views.toLocaleString()} views
+                </p>
+              </div>
             </div>
-            {videoResult.isOutlier && (
-              <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1 shadow-xs">
-                <Flame className="w-3.5 h-3.5 text-emerald-600 fill-emerald-600" />
-                VERIFIED OUTLIER ({videoResult.multiplier}x)
+            <div className="flex items-center gap-2 shrink-0">
+              <span
+                className={`px-2.5 py-1 rounded-xl text-xs font-mono font-bold ${
+                  videoResult.isOutlier
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-slate-100 text-slate-700'
+                }`}
+              >
+                {videoResult.multiplier}x median
               </span>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-            {/* Thumbnail */}
-            <div className="md:col-span-5 relative group rounded-2xl overflow-hidden shadow-md aspect-video bg-slate-100">
-              <img
-                src={videoResult.thumbnail}
-                alt={videoResult.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
               <a
                 href={`https://youtube.com/watch?v=${videoResult.videoId}`}
                 target="_blank"
                 rel="noreferrer"
-                className="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1"
+                className="text-slate-400 hover:text-rose-600 transition-colors"
               >
-                <span>Watch on YouTube</span>
-                <ExternalLink className="w-3.5 h-3.5" />
+                <ExternalLink className="w-4 h-4" />
               </a>
             </div>
-
-            {/* Video Analytics Metrics */}
-            <div className="md:col-span-7 space-y-4">
-              <h2 className="text-lg font-bold text-slate-900 leading-snug line-clamp-2">
-                {videoResult.title}
-              </h2>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
-                    Target Views
-                  </span>
-                  <span className="text-base sm:text-lg font-black font-mono text-slate-900">
-                    {videoResult.views.toLocaleString()}
-                  </span>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
-                    Channel 10-Vid Median
-                  </span>
-                  <span className="text-base sm:text-lg font-black font-mono text-slate-600">
-                    {videoResult.channelMedian.toLocaleString()}
-                  </span>
-                </div>
-
-                <div
-                  className={`p-3.5 rounded-2xl border ${
-                    videoResult.isOutlier
-                      ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                      : 'bg-slate-50 border-slate-200/80 text-slate-900'
-                  }`}
-                >
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">
-                    Multiplier
-                  </span>
-                  <span
-                    className={`text-base sm:text-lg font-black font-mono ${
-                      videoResult.isOutlier ? 'text-emerald-700' : 'text-slate-800'
-                    }`}
-                  >
-                    {videoResult.multiplier}x
-                  </span>
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70 text-xs text-slate-600 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>
-                  {videoResult.isOutlier
-                    ? `This video generated ${videoResult.multiplier}x more views than the channel's standard upload. Its packaging broke into broad search feeds.`
-                    : `This video is performing near the channel's typical average (${videoResult.multiplier}x baseline).`}
-                </span>
-              </div>
-            </div>
           </div>
 
-          {/* SINGLE VIDEO AI PACKAGING BREAKDOWN */}
-          {/* Embedded AI Co-Pilot for Single Video */}
-          <div className="mt-6 pt-6 border-t border-slate-200/80">
-            <AiCopilotChat
-              toolName="Single Video Performance Breakdown"
-              contextData={{
-                tool: 'single_video_check',
-                video: {
-                  id: videoResult.videoId,
-                  title: videoResult.title,
-                  channel: videoResult.channelTitle,
-                  views: videoResult.views,
-                  channelMedian: videoResult.channelMedian,
-                  multiplier: videoResult.multiplier,
-                  isOutlier: videoResult.isOutlier,
-                },
-              }}
-              contextSummary={`Video: "${videoResult.title}" (${videoResult.views.toLocaleString()} views • ${videoResult.multiplier}x median)`}
-              suggestedPrompts={[
-                '🎯 Brainstorm 5 higher-CTR title variations for this topic',
-                '💡 How could the thumbnail be improved for stronger visual contrast?',
-                '🔍 What specific emotional trigger would attract high-intent viewers?',
-                '📊 Compare this video against its channel median baseline',
-              ]}
-              creditBalance={creditBalance}
-              onCreditDeducted={onCreditDeducted}
-              onInsufficientCredits={onInsufficientCredits}
-            />
-          </div>
+          {/* Embedded Conversational AI Co-Pilot Chatbox */}
+          <AiCopilotChat
+            toolName="Single Video Performance Breakdown"
+            contextData={{
+              tool: 'single_video_check',
+              video: {
+                id: videoResult.videoId,
+                title: videoResult.title,
+                channel: videoResult.channelTitle,
+                views: videoResult.views,
+                channelMedian: videoResult.channelMedian,
+                multiplier: videoResult.multiplier,
+                isOutlier: videoResult.isOutlier,
+              },
+            }}
+            contextSummary={`Video: "${videoResult.title}" (${videoResult.views.toLocaleString()} views • ${videoResult.multiplier}x median)`}
+            suggestedPrompts={[
+              '🎯 Brainstorm 5 higher-CTR title variations for this topic',
+              '💡 How could the thumbnail be improved for stronger visual contrast?',
+              '🔍 What specific emotional trigger would attract high-intent viewers?',
+              '📊 Compare this video against its channel median baseline',
+            ]}
+            creditBalance={creditBalance}
+            onCreditDeducted={onCreditDeducted}
+            onInsufficientCredits={onInsufficientCredits}
+          />
         </div>
       )}
 
       {/* DEEP CHANNEL OUTLIER AUDIT VIEW */}
       {channelResult && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
-          {/* Channel Header Banner */}
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-4 text-center sm:text-left">
+        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+          {/* Sleek Minimalist Channel Header Pill */}
+          <div className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
               {channelResult.channel.avatarUrl && (
                 <img
                   src={channelResult.channel.avatarUrl}
                   alt={channelResult.channel.title}
-                  className="w-16 h-16 rounded-2xl object-cover border border-slate-200 shadow-xs shrink-0"
+                  className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0"
                 />
               )}
-              <div>
-                <div className="flex items-center gap-2 justify-center sm:justify-start">
-                  <h2 className="text-xl font-black text-slate-900">{channelResult.channel.title}</h2>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-50 text-rose-700 border border-rose-200">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                    {channelResult.channel.title}
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-rose-50 text-rose-700 border border-rose-200">
                     AUDITED
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 font-medium">
-                  {channelResult.channel.subscriberCount.toLocaleString()} subscribers • {channelResult.channel.videosScanned} recent uploads analyzed
+                <p className="text-[11px] text-slate-500 font-medium">
+                  {channelResult.channel.subscriberCount.toLocaleString()} subscribers • Median baseline: {channelResult.channel.medianViews.toLocaleString()} views
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4 shrink-0">
-              <div className="px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200/80 text-center">
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">Channel Median</span>
-                <span className="text-base font-black font-mono text-slate-900">
-                  {channelResult.channel.medianViews.toLocaleString()}
-                </span>
-              </div>
-              <div className="px-4 py-2 rounded-2xl bg-emerald-50 border border-emerald-200 text-center">
-                <span className="text-[10px] uppercase font-bold text-emerald-600 block">Outliers Identified</span>
-                <span className="text-base font-black font-mono text-emerald-700">
-                  {channelResult.totalOutliersFound}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* TOP 10 CHANNEL UPLOADS CATALOG */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-                <Flame className="w-5 h-5 text-rose-600" />
-                <span>Top 10 Channel Uploads (Ranked by Multiplier & Views)</span>
-              </h3>
-              <span className="text-xs text-slate-500 font-medium">
-                Baseline: {channelResult.channel.medianViews.toLocaleString()} median views
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="px-2.5 py-1 rounded-xl text-xs font-mono font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                Top 10 Uploads Loaded
               </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {(channelResult.topVideos && channelResult.topVideos.length > 0
-                ? channelResult.topVideos
-                : channelResult.outliers
-              ).slice(0, 10).map((video, idx) => (
-                <div
-                  key={video.id}
-                  className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-xs hover:border-purple-300 hover:shadow-md transition-all flex flex-col justify-between group"
-                >
-                  <div className="relative aspect-video bg-slate-100 overflow-hidden">
-                    <img
-                      src={video.thumbnail}
-                      alt={video.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute top-2.5 left-2.5">
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-black font-mono bg-slate-900/80 text-white backdrop-blur-xs">
-                        #{idx + 1}
-                      </span>
-                    </div>
-                    <div className="absolute top-2.5 right-2.5">
-                      <span
-                        className={`px-2.5 py-1 rounded-md text-[11px] font-black font-mono uppercase tracking-wider shadow-sm flex items-center gap-1 ${
-                          video.multiplier >= 2.0
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-slate-900/80 text-white backdrop-blur-xs'
-                        }`}
-                      >
-                        <Flame className="w-3 h-3" />
-                        {video.multiplier}x
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
-                    <h4 className="text-xs font-bold text-slate-900 leading-snug line-clamp-2">
-                      {video.title}
-                    </h4>
-
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                      <span className="font-mono font-bold text-slate-800 flex items-center gap-1">
-                        <Eye className="w-3.5 h-3.5 text-slate-400" />
-                        {video.viewCount.toLocaleString()} views
-                      </span>
-                      <a
-                        href={`https://youtube.com/watch?v=${video.id}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[11px] font-bold text-rose-600 hover:text-rose-700 flex items-center gap-0.5"
-                      >
-                        <span>Watch</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
 

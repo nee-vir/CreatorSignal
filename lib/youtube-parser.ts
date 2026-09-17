@@ -50,6 +50,15 @@ export function parseYouTubeInput(rawInput: string): YouTubeParsedInput {
     };
   }
 
+  // 3b. Channel handle without '@' (3-50 characters alphanumeric/dots/dashes, not an 11-char video ID)
+  if (/^[a-zA-Z0-9_.-]{3,50}$/.test(input) && !input.includes('/') && !input.includes('?')) {
+    return {
+      type: 'channel',
+      identifier: input,
+      identifierType: 'handle',
+    };
+  }
+
   // 4. Channel URL with Handle (e.g. youtube.com/@MrBeast)
   const handleUrlMatch = input.match(/(?:https?:\/\/)?(?:www\.)?youtube\.com\/@([a-zA-Z0-9_.-]{3,50})(?:\/.*)?$/i);
   if (handleUrlMatch && handleUrlMatch[1]) {

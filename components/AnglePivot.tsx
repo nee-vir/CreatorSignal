@@ -164,96 +164,27 @@ export function AnglePivot({
         )}
       </div>
 
-      {/* 3 Psychological Angle Cards */}
+      {/* AI Angle & Hook Strategy Chatbox Hero */}
       {angles && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">
-              3 High-Converting Psychological Hooks
-            </h3>
+          {/* Sleek Concept Summary Pill */}
+          <div className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                Concept Analyzed: "{videoTitle}"
+              </h3>
+              <p className="text-[11px] text-slate-500 font-medium">
+                Contrarian, Resource Blueprint, and Mistake angles loaded in memory
+              </p>
+            </div>
+            <span className="px-2.5 py-1 rounded-xl text-xs font-mono font-bold bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
+              3 Angles Ready
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {angles.map((angle, idx) => {
-              const isContrarian = angle.type === 'Contrarian';
-              const isResource = angle.type === 'Resource';
-              const isMistake = angle.type === 'Mistake';
-
-              const badgeColor = isContrarian
-                ? 'bg-rose-50 border-rose-200 text-rose-700'
-                : isResource
-                ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                : 'bg-amber-50 border-amber-200 text-amber-800';
-
-              const Icon = isContrarian ? Sparkles : isResource ? BookOpen : ShieldAlert;
-
-              return (
-                <div
-                  key={idx}
-                  className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between gap-4 relative group hover:border-purple-300 transition-all"
-                >
-                  <div>
-                    {/* Angle Type Badge */}
-                    <div className="flex items-center justify-between mb-3">
-                      <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold border flex items-center gap-1 ${badgeColor}`}>
-                        <Icon className="w-3 h-3" />
-                        <span>The {angle.type} Angle</span>
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-mono">Hook #{idx + 1}</span>
-                    </div>
-
-                    {/* Generated Title */}
-                    <h4 className="text-base font-bold text-slate-900 leading-snug mb-2">
-                      "{angle.title}"
-                    </h4>
-
-                    {/* Psychological Trigger */}
-                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 mb-4">
-                      <span className="font-semibold text-slate-800 block text-[11px] mb-0.5">
-                        Psychological Trigger:
-                      </span>
-                      {angle.trigger}
-                    </div>
-
-                    {/* First 30 Seconds Script */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-                          First 30 Seconds Script:
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-600 italic bg-slate-50 p-3 rounded-xl border border-slate-200 leading-relaxed">
-                        "{angle.openingScript}"
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Copy Button */}
-                  <button
-                    onClick={() => handleCopy(angle.openingScript, idx)}
-                    className="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 border border-slate-200"
-                  >
-                    {copiedIdx === idx ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-600" />
-                        <span className="text-emerald-700">Script Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5 text-slate-500" />
-                        <span>Copy Hook Script</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Embedded AI Co-Pilot */}
-          <div className="mt-6">
-            <AiCopilotChat
-              toolName={`Hook & Angle Pivot: "${videoTitle}"`}
+          {/* Embedded AI Co-Pilot - The Hero */}
+          <AiCopilotChat
+            toolName={`Hook & Angle Pivot: "${videoTitle}"`}
               contextData={{
                 tool: 'angle_pivot',
                 videoTitle: videoTitle,
@@ -275,7 +206,6 @@ export function AnglePivot({
               onCreditDeducted={onCreditDeducted}
               onInsufficientCredits={onInsufficientCredits}
             />
-          </div>
         </div>
       )}
 

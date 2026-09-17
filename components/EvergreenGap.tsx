@@ -168,118 +168,22 @@ export function EvergreenGap({
       {/* Results Grid */}
       {opportunities && (
         <div className="space-y-4">
-          {/* AI Evergreen Remake Strategy Card */}
-          {aiSynthesis && opportunities.length > 0 && (
-            <div className="p-5 rounded-3xl bg-gradient-to-br from-slate-900 to-indigo-950 text-white shadow-md space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-xl bg-purple-500/30 flex items-center justify-center">
-                    <Brain className="w-4 h-4 text-purple-300" />
-                  </div>
-                  <span className="text-xs font-black uppercase tracking-wider text-purple-200">
-                    AI Evergreen Remake Strategy & Search Intent Analysis
-                  </span>
-                </div>
-                <span className="text-xs text-purple-300 font-mono">
-                  {opportunities.length} Evergreen Topics Identified
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-300 flex items-center gap-1.5">
-                    <Target className="w-3.5 h-3.5 text-cyan-400" />
-                    Core Search Intent
-                  </span>
-                  <p className="text-xs text-slate-200 leading-relaxed font-medium">
-                    {aiSynthesis.coreSearchIntent}
-                  </p>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                    2026 Modernization Playbook
-                  </span>
-                  <p className="text-xs text-slate-200 leading-relaxed font-medium">
-                    {aiSynthesis.modernizationPlaybook}
-                  </p>
-                </div>
-              </div>
-
-              {aiSynthesis.recommendedTitleHook && (
-                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-400/20 text-xs flex items-start gap-2.5">
-                  <Zap className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold text-amber-300 uppercase tracking-wider text-[10px] block mb-0.5">
-                      Recommended 2026 Remake Title Hook:
-                    </span>
-                    <span className="font-mono text-white text-xs font-semibold">
-                      "{aiSynthesis.recommendedTitleHook}"
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">
-              Discovered Evergreen Winning Topics ({opportunities.length})
-            </h3>
-          </div>
-
-          {opportunities.length === 0 ? (
-            <div className="bg-white p-10 text-center rounded-3xl border border-slate-200 shadow-sm">
-              <Sparkles className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-              <p className="text-slate-800 font-bold text-sm">No Evergreen Winners Found</p>
-              <p className="text-slate-500 text-xs mt-1 max-w-md mx-auto">
-                None of the older videos in this channel met the 20 views/hour threshold. Try scanning another competitor channel!
+          {/* Sleek Channel Summary Pill */}
+          <div className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                Evergreen Topic Radar: {channelId}
+              </h3>
+              <p className="text-[11px] text-slate-500 font-medium">
+                {opportunities.length} active evergreen topics identified with sustained search velocity
               </p>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {opportunities.map((opp) => (
-                <div
-                  key={opp.videoId}
-                  className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between gap-4"
-                >
-                  <div className="flex items-start gap-4">
-                    {opp.thumbnailUrl && (
-                      <div className="w-32 h-20 rounded-xl overflow-hidden shrink-0 border border-slate-200 bg-slate-100">
-                        <img
-                          src={opp.thumbnailUrl}
-                          alt={opp.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-amber-50 text-amber-900 border border-amber-300">
-                          {opp.opportunityScore} Opportunity
-                        </span>
-                        <span className="text-[11px] text-slate-500 font-mono">
-                          {opp.daysAgo} days old
-                        </span>
-                      </div>
-                      <h4 className="text-sm font-bold text-slate-900 line-clamp-2">{opp.title}</h4>
-                      <p className="text-xs text-slate-500 mt-1 font-mono">
-                        ~{opp.estimatedVph} views/hr ({opp.totalViews.toLocaleString()} views total)
-                      </p>
-                    </div>
-                  </div>
+            <span className="px-2.5 py-1 rounded-xl text-xs font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+              {opportunities.length} Evergreen Topics Loaded
+            </span>
+          </div>
 
-                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-700">
-                    <span className="font-bold text-rose-600 block mb-0.5">Recommended Remake Strategy:</span>
-                    {opp.recommendation}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Embedded AI Co-Pilot */}
+          {/* Embedded AI Co-Pilot - The Hero */}
           <AiCopilotChat
             toolName={`Evergreen Gap Radar: ${channelId}`}
             contextData={{
