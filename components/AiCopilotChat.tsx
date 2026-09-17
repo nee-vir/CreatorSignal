@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Sparkles, Send, Bot, User, CornerDownLeft, AlertCircle, RefreshCw, Layers, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Send, Bot, User, AlertCircle, RefreshCw, Layers, Copy, Check, Quote } from 'lucide-react';
 import { apiFetch } from '@/lib/api-client';
 
 export interface ChatMessage {
@@ -32,7 +32,7 @@ export function AiCopilotChat({
   onCreditDeducted,
   onInsufficientCredits,
   initialMessage,
-  placeholder = 'Ask anything about this data, request title ideas, extract keywords, or do calculations...',
+  placeholder = 'Ask why an outlier blew up, brainstorm 5 fresh title angles, or break down the numbers in plain English...',
 }: AiCopilotChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
     {
@@ -40,13 +40,14 @@ export function AiCopilotChat({
       role: 'assistant',
       content:
         initialMessage ||
-        `👋 I am your **Creator Signal AI Co-Pilot**. I have live access to the YouTube data shown above for **${toolName}**.\n\nAsk me anything! For example, ask me to **extract top keywords**, **brainstorm 5 high-CTR titles**, **compare video performance**, or **calculate view multipliers and drop-off rates**.`,
+        `👋 Hey! I'm your **Creator Signal AI Co-Pilot**. I'm directly connected to the live YouTube dataset for **${toolName}**.\n\nWhether you want to **uncover why top outliers blew up**, **brainstorm fresh high-CTR title variations**, **spot high-leverage keywords**, or **translate the numbers into plain English** — I'm here as your creative partner.\n\nWhat should we dig into first?`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [copiedText, setCopiedText] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -58,11 +59,22 @@ export function AiCopilotChat({
     scrollToBottom();
   }, [messages, loading]);
 
+  const handleCopy = (text: string) => {
+    const clean = text
+      .replace(/^\*\*|^\*|"$|^"|\*\*$|\*$/g, '')
+      .replace(/["']/g, '')
+      .trim();
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(clean);
+      setCopiedText(text);
+      setTimeout(() => setCopiedText(null), 1800);
+    }
+  };
+
   const handleSendMessage = async (textToSend?: string) => {
     const query = (textToSend || inputValue).trim();
     if (!query || loading) return;
 
-    // Check credit balance before sending
     if (creditBalance < 5) {
       onInsufficientCredits();
       return;
@@ -110,7 +122,7 @@ export function AiCopilotChat({
       const assistantMsg: ChatMessage = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
-        content: data.reply || 'Analysis complete.',
+        content: data.reply || 'Strategic analysis ready.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
@@ -129,80 +141,243 @@ export function AiCopilotChat({
     }
   };
 
-  // Helper to format basic markdown-style text safely
-  const renderFormattedContent = (content: string) => {
-    const lines = content.split('\n');
-    return lines.map((line, idx) => {
-      // Heading level 3 or 4
-      if (line.startsWith('### ') || line.startsWith('#### ')) {
-        const text = line.replace(/^#{3,4}\s+/, '');
+  // Helper to render inline formatting: code `text`, bold **text**, and italic *text*
+  const renderInline = (str: string) => {
+    const parts = str.split(/(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)/g);
+    return parts.map((part, idx) => {
+      if (part.startsWith('`') && part.endsWith('`')) {
         return (
-          <h4 key={idx} className="font-bold text-slate-900 text-sm mt-3 mb-1">
-            {text}
-          </h4>
+          <code
+            key={idx}
+            className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 font-mono text-[11px] font-semibold border border-purple-100"
+          >
+            {part.slice(1, -1)}
+          </code>
         );
       }
-      // Heading level 2
-      if (line.startsWith('## ')) {
-        const text = line.replace(/^##\s+/, '');
-        return (
-          <h3 key={idx} className="font-black text-slate-900 text-base mt-4 mb-1.5 border-b border-slate-100 pb-1">
-            {text}
-          </h3>
-        );
-      }
-      // Bullet list item
-      if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
-        const text = line.trim().replace(/^[-*]\s+/, '');
-        return (
-          <div key={idx} className="flex items-start gap-2 my-1 pl-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-1.5 shrink-0" />
-            <span className="text-xs text-slate-800 leading-relaxed font-normal">
-              {parseBoldAndItalics(text)}
-            </span>
-          </div>
-        );
-      }
-      // Numbered list item
-      const numMatch = line.trim().match(/^(\d+)\.\s+(.*)/);
-      if (numMatch) {
-        return (
-          <div key={idx} className="flex items-start gap-2 my-1 pl-1">
-            <span className="font-mono text-[11px] font-bold text-purple-600 shrink-0 w-4">
-              {numMatch[1]}.
-            </span>
-            <span className="text-xs text-slate-800 leading-relaxed font-normal">
-              {parseBoldAndItalics(numMatch[2])}
-            </span>
-          </div>
-        );
-      }
-      // Empty line
-      if (!line.trim()) {
-        return <div key={idx} className="h-2" />;
-      }
-      // Standard line
-      return (
-        <p key={idx} className="text-xs text-slate-800 leading-relaxed my-1 font-normal">
-          {parseBoldAndItalics(line)}
-        </p>
-      );
-    });
-  };
-
-  const parseBoldAndItalics = (str: string) => {
-    // Basic bold **text** parsing
-    const parts = str.split(/(\*\*.*?\*\*)/g);
-    return parts.map((part, i) => {
       if (part.startsWith('**') && part.endsWith('**')) {
         return (
-          <strong key={i} className="font-bold text-slate-900">
+          <strong key={idx} className="font-bold text-slate-900">
             {part.slice(2, -2)}
           </strong>
         );
       }
+      if (part.startsWith('*') && part.endsWith('*')) {
+        return (
+          <em key={idx} className="italic text-slate-700">
+            {part.slice(1, -1)}
+          </em>
+        );
+      }
       return part;
     });
+  };
+
+  // Structured Markdown Parser
+  const renderFormattedContent = (content: string) => {
+    const rawLines = content.split('\n');
+    const elements: React.ReactNode[] = [];
+    let i = 0;
+
+    while (i < rawLines.length) {
+      const line = rawLines[i];
+      const trimmed = line.trim();
+
+      // Empty line
+      if (!trimmed) {
+        elements.push(<div key={`empty-${i}`} className="h-2" />);
+        i++;
+        continue;
+      }
+
+      // Dividers
+      if (trimmed === '---' || trimmed === '***' || trimmed === '___') {
+        elements.push(<div key={`div-${i}`} className="my-3 border-t border-slate-200/80" />);
+        i++;
+        continue;
+      }
+
+      // Markdown Table detection
+      if (
+        trimmed.startsWith('|') &&
+        trimmed.endsWith('|') &&
+        i + 1 < rawLines.length &&
+        rawLines[i + 1].includes('---')
+      ) {
+        const headers = trimmed
+          .split('|')
+          .slice(1, -1)
+          .map((h) => h.trim());
+        const startIdx = i;
+        i += 2; // skip header and separator row
+        const rows: string[][] = [];
+        while (i < rawLines.length && rawLines[i].trim().startsWith('|') && rawLines[i].trim().endsWith('|')) {
+          const rowCells = rawLines[i]
+            .trim()
+            .split('|')
+            .slice(1, -1)
+            .map((c) => c.trim());
+          rows.push(rowCells);
+          i++;
+        }
+
+        elements.push(
+          <div key={`table-${startIdx}`} className="my-3 overflow-x-auto rounded-xl border border-slate-200 shadow-2xs">
+            <table className="w-full text-left text-xs text-slate-700">
+              <thead className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200">
+                <tr>
+                  {headers.map((h, hIdx) => (
+                    <th key={hIdx} className="px-3 py-2 text-[11px] font-bold uppercase tracking-wider">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {rows.map((r, rIdx) => (
+                  <tr key={rIdx} className={rIdx % 2 === 1 ? 'bg-slate-50/50' : ''}>
+                    {r.map((cell, cIdx) => (
+                      <td key={cIdx} className="px-3 py-2 text-xs">
+                        {renderInline(cell)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+        continue;
+      }
+
+      // Blockquotes / Title Cards
+      if (trimmed.startsWith('>')) {
+        const quoteText = trimmed.replace(/^>\s*/, '');
+        const isCopied = copiedText === quoteText;
+        elements.push(
+          <div
+            key={`quote-${i}`}
+            className="my-2.5 p-3.5 rounded-xl bg-purple-50/80 border border-purple-200/90 text-slate-900 flex items-start justify-between gap-3 shadow-2xs group"
+          >
+            <div className="flex items-start gap-2.5 flex-1 min-w-0">
+              <Quote className="w-4 h-4 text-purple-600 shrink-0 mt-0.5 fill-purple-200" />
+              <div className="text-xs leading-relaxed font-medium break-words text-purple-950">
+                {renderInline(quoteText)}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleCopy(quoteText)}
+              title="Copy to clipboard"
+              className="shrink-0 p-1.5 rounded-lg bg-white border border-purple-200 text-purple-700 hover:bg-purple-100 hover:text-purple-900 transition-colors shadow-2xs flex items-center gap-1 text-[10px] font-bold cursor-pointer"
+            >
+              {isCopied ? (
+                <>
+                  <Check className="w-3 h-3 text-emerald-600" />
+                  <span className="text-emerald-700">Copied</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3 text-purple-600" />
+                  <span>Copy</span>
+                </>
+              )}
+            </button>
+          </div>
+        );
+        i++;
+        continue;
+      }
+
+      // Heading 2 (Major Theme Section)
+      if (trimmed.startsWith('## ')) {
+        const text = trimmed.replace(/^##\s+/, '');
+        elements.push(
+          <h3
+            key={`h2-${i}`}
+            className="text-sm font-black text-slate-900 mt-4 mb-2 flex items-center gap-1.5 border-b border-purple-100 pb-1"
+          >
+            {renderInline(text)}
+          </h3>
+        );
+        i++;
+        continue;
+      }
+
+      // Heading 3 or 4 (Subsection)
+      if (trimmed.startsWith('### ') || trimmed.startsWith('#### ')) {
+        const text = trimmed.replace(/^#{3,4}\s+/, '');
+        elements.push(
+          <h4
+            key={`h3-${i}`}
+            className="text-xs font-black uppercase tracking-wider text-purple-900 mt-3.5 mb-1.5 flex items-center gap-1.5"
+          >
+            <span className="w-2 h-0.5 rounded-full bg-purple-500" />
+            {renderInline(text)}
+          </h4>
+        );
+        i++;
+        continue;
+      }
+
+      // Bullet list item
+      if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+        const indentSpaces = line.search(/\S/);
+        const isNested = indentSpaces >= 2;
+        const text = trimmed.replace(/^[-*]\s+/, '');
+        elements.push(
+          <div
+            key={`bullet-${i}`}
+            className={`flex items-start gap-2 my-1 ${isNested ? 'pl-5' : 'pl-1'}`}
+          >
+            <span
+              className={`rounded-full shrink-0 ${
+                isNested
+                  ? 'w-1 h-1 bg-indigo-400 mt-2 border border-indigo-400'
+                  : 'w-1.5 h-1.5 bg-purple-500 mt-1.5'
+              }`}
+            />
+            <span className="text-xs text-slate-800 leading-relaxed font-normal">
+              {renderInline(text)}
+            </span>
+          </div>
+        );
+        i++;
+        continue;
+      }
+
+      // Numbered list item
+      const numMatch = trimmed.match(/^(\d+)\.\s+(.*)/);
+      if (numMatch) {
+        const indentSpaces = line.search(/\S/);
+        const isNested = indentSpaces >= 2;
+        elements.push(
+          <div
+            key={`num-${i}`}
+            className={`flex items-start gap-2 my-1.5 ${isNested ? 'pl-5' : 'pl-1'}`}
+          >
+            <span className="font-mono text-[11px] font-bold text-purple-700 bg-purple-50 border border-purple-200/80 px-1.5 py-0.2 rounded-md shrink-0">
+              {numMatch[1]}
+            </span>
+            <span className="text-xs text-slate-800 leading-relaxed font-normal pt-0.5">
+              {renderInline(numMatch[2])}
+            </span>
+          </div>
+        );
+        i++;
+        continue;
+      }
+
+      // Normal paragraph
+      elements.push(
+        <p key={`p-${i}`} className="text-xs text-slate-800 leading-relaxed my-1 font-normal">
+          {renderInline(line)}
+        </p>
+      );
+      i++;
+    }
+
+    return elements;
   };
 
   return (
@@ -220,11 +395,11 @@ export function AiCopilotChat({
               </h3>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Live Data Grounded
+                Live Gemini 3.6 Flash
               </span>
             </div>
             <p className="text-[11px] text-purple-200/80">
-              {contextSummary || `Active Studio Context: ${toolName}`}
+              {contextSummary || `Active Creative Context: ${toolName}`}
             </p>
           </div>
         </div>
@@ -264,7 +439,7 @@ export function AiCopilotChat({
       )}
 
       {/* Message History Feed */}
-      <div className="p-4 sm:p-6 space-y-4 max-h-[460px] overflow-y-auto bg-slate-50/50">
+      <div className="p-4 sm:p-6 space-y-4 max-h-[480px] overflow-y-auto bg-slate-50/50">
         {messages.map((msg) => {
           const isAssistant = msg.role === 'assistant';
           return (
@@ -283,19 +458,19 @@ export function AiCopilotChat({
               </div>
 
               <div
-                className={`max-w-[85%] rounded-2xl p-4 text-xs shadow-xs ${
+                className={`max-w-[88%] rounded-2xl p-4 text-xs shadow-xs ${
                   isAssistant
                     ? 'bg-white border border-slate-200 text-slate-900'
                     : 'bg-purple-700 text-white font-medium'
                 }`}
               >
                 {isAssistant ? (
-                  <div>{renderFormattedContent(msg.content)}</div>
+                  <div className="space-y-1">{renderFormattedContent(msg.content)}</div>
                 ) : (
                   <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                 )}
                 <div
-                  className={`text-[10px] mt-2 text-right ${
+                  className={`text-[10px] mt-2.5 text-right ${
                     isAssistant ? 'text-slate-400' : 'text-purple-200/80'
                   }`}
                 >
@@ -307,13 +482,13 @@ export function AiCopilotChat({
         })}
 
         {loading && (
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-3 animate-in fade-in">
             <div className="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center shrink-0">
               <Bot className="w-4 h-4" />
             </div>
-            <div className="bg-white border border-purple-200 rounded-2xl p-4 text-xs text-slate-600 shadow-xs flex items-center gap-2">
+            <div className="bg-white border border-purple-200 rounded-2xl p-4 text-xs text-slate-700 shadow-xs flex items-center gap-2.5">
               <RefreshCw className="w-3.5 h-3.5 animate-spin text-purple-600" />
-              <span>Analyzing live YouTube dataset & calculating metrics...</span>
+              <span>Reviewing YouTube performance & framing creative angles...</span>
             </div>
           </div>
         )}
