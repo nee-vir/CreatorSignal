@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedUserId } from '@/lib/auth/server-auth';
 import { deductCredits, CREDIT_COSTS, InsufficientCreditsError } from '@/lib/credits/deduct';
 import { searchYouTubeVideos, getVideoDetails } from '@/lib/youtube/cache';
+import { generateWithGeminiFallback } from '@/lib/gemini';
 
 export const dynamic = 'force-dynamic';
 
@@ -92,25 +93,16 @@ Analyze the competitive landscape and provide structured JSON with:
 
 Return raw JSON only.`;
 
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${geminiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { responseMimeType: 'application/json' },
-            }),
-          }
-        );
+        const rawText = await generateWithGeminiFallback({
+          prompt,
+          responseJson: true,
+          temperature: 0.4,
+          maxOutputTokens: 1500,
+        });
 
-        if (geminiRes.ok) {
-          const gData = await geminiRes.json();
-          const raw = gData.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (raw) aiLandscape = JSON.parse(raw);
-        }
+        aiLandscape = JSON.parse(rawText);
       } catch (err) {
-        console.warn('[SerpAI] Gemini error:', err);
+        console.warn('[SerpAI] Gemini fallback cascade exhausted:', err);
       }
     }
 

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedUserId } from '@/lib/auth/server-auth';
 import { deductCredits, CREDIT_COSTS, InsufficientCreditsError } from '@/lib/credits/deduct';
 import { calculateOutlierMultiplier } from '@/lib/analytics/outlier';
+import { generateWithGeminiFallback } from '@/lib/gemini';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,11 +31,9 @@ export async function POST(request: Request) {
 
     // 3. Automated AI Outlier Deconstruction
     let aiAnalysis: any = null;
-    const geminiKey = process.env.GEMINI_API_KEY;
 
-    if (geminiKey) {
-      try {
-        const prompt = `You are a YouTube viral topic and packaging analyst.
+    try {
+      const prompt = `You are a YouTube viral topic and packaging analyst.
 Analyze this video outlier performance:
 Title: "${result.videoTitle}"
 Channel: "${result.channelTitle}"
@@ -50,26 +49,16 @@ Provide a structured AI analysis in raw JSON format with the following keys:
 
 Return raw JSON only.`;
 
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${geminiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { responseMimeType: 'application/json' },
-            }),
-          }
-        );
+      const rawText = await generateWithGeminiFallback({
+        prompt,
+        responseJson: true,
+        temperature: 0.4,
+        maxOutputTokens: 1500,
+      });
 
-        if (geminiRes.ok) {
-          const gData = await geminiRes.json();
-          const raw = gData.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (raw) aiAnalysis = JSON.parse(raw);
-        }
-      } catch (err) {
-        console.warn('[OutlierEngineAI] Error calling Gemini:', err);
-      }
+      aiAnalysis = JSON.parse(rawText);
+    } catch (err) {
+      console.warn('[OutlierEngineAI] Error calling Gemini:', err);
     }
 
     if (!aiAnalysis) {

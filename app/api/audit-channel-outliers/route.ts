@@ -5,6 +5,7 @@ import { parseYouTubeInput } from '@/lib/youtube-parser';
 import { resolveChannelIdentifier } from '@/lib/youtube/resolve-channel';
 import { fetchWithYouTubeCache } from '@/lib/youtube/cache';
 import { serverEnv } from '@/lib/env';
+import { generateWithGeminiFallback } from '@/lib/gemini';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,42 +78,31 @@ You must return a valid JSON object with these exact keys:
 
 Format your response strictly as JSON with those keys. Do not include markdown code block formatting around the JSON.`;
 
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${geminiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: 'application/json' },
-          }),
-        }
-      );
+      const rawText = await generateWithGeminiFallback({
+        prompt,
+        responseJson: true,
+        temperature: 0.4,
+        maxOutputTokens: 2000,
+      });
 
-      if (res.ok) {
-        const data = await res.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text) {
-          const parsed = JSON.parse(text);
-          return {
-            curiosityGap: parsed.curiosityGap || 'Creates an irresistible gap between common perception and a shocking hidden reality.',
-            emotionalTrigger: parsed.emotionalTrigger || 'Triggers acute FOMO and status anxiety, making viewers feel they are missing out on vital information.',
-            hookStrategy: parsed.hookStrategy || 'Uses a high-stakes promise paired with contrarian framing to disrupt regular browsing patterns.',
-            thumbnailPackaging: parsed.thumbnailPackaging || 'Relies on extreme visual contrast and an isolated subject to stand out against competing thumbnails.',
-            retentionDriver: parsed.retentionDriver || 'Immediate question payoff promised within the first 15 seconds keeps viewer drop-off near zero.',
-            summary: parsed.summary || `Packaging this topic around belief disruption generated an exceptional ${multiplier}x multiplier.`,
-            replicationPlaybook: Array.isArray(parsed.replicationPlaybook) && parsed.replicationPlaybook.length > 0
-              ? parsed.replicationPlaybook
-              : [
-                  `Why Everything You've Been Told About [Topic] Is Backward`,
-                  `I Spent 100 Hours Testing [Topic] (Here's What Failed)`,
-                  `The 1 Critical Mistake Destroying Your [Topic] Results`,
-                ],
-          };
-        }
-      }
+      const parsed = JSON.parse(rawText);
+      return {
+        curiosityGap: parsed.curiosityGap || 'Creates an irresistible gap between common perception and a shocking hidden reality.',
+        emotionalTrigger: parsed.emotionalTrigger || 'Triggers acute FOMO and status anxiety, making viewers feel they are missing out on vital information.',
+        hookStrategy: parsed.hookStrategy || 'Uses a high-stakes promise paired with contrarian framing to disrupt regular browsing patterns.',
+        thumbnailPackaging: parsed.thumbnailPackaging || 'Relies on extreme visual contrast and an isolated subject to stand out against competing thumbnails.',
+        retentionDriver: parsed.retentionDriver || 'Immediate question payoff promised within the first 15 seconds keeps viewer drop-off near zero.',
+        summary: parsed.summary || `Packaging this topic around belief disruption generated an exceptional ${multiplier}x multiplier.`,
+        replicationPlaybook: Array.isArray(parsed.replicationPlaybook) && parsed.replicationPlaybook.length > 0
+          ? parsed.replicationPlaybook
+          : [
+              `Why Everything You've Been Told About [Topic] Is Backward`,
+              `I Spent 100 Hours Testing [Topic] (Here's What Failed)`,
+              `The 1 Critical Mistake Destroying Your [Topic] Results`,
+            ],
+      };
     } catch (err) {
-      console.warn('[GeminiAnalysis] Live call failed, using dynamic analysis:', err);
+      console.warn('[GeminiAnalysis] Fallback cascade exhausted, using dynamic analysis:', err);
     }
   }
 

@@ -4,6 +4,7 @@ import { deductCredits, CREDIT_COSTS, InsufficientCreditsError } from '@/lib/cre
 import { parseYouTubeInput } from '@/lib/youtube-parser';
 import { fetchWithYouTubeCache } from '@/lib/youtube/cache';
 import { serverEnv } from '@/lib/env';
+import { generateWithGeminiFallback } from '@/lib/gemini';
 
 export const dynamic = 'force-dynamic';
 
@@ -185,23 +186,14 @@ Provide a structured AI verdict as JSON with keys:
 
 Return strictly raw JSON.`;
 
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${geminiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: aiPrompt }] }],
-              generationConfig: { responseMimeType: 'application/json' },
-            }),
-          }
-        );
+        const rawText = await generateWithGeminiFallback({
+          prompt: aiPrompt,
+          responseJson: true,
+          temperature: 0.4,
+          maxOutputTokens: 1500,
+        });
 
-        if (geminiRes.ok) {
-          const gData = await geminiRes.json();
-          const raw = gData.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (raw) aiAnalysis = JSON.parse(raw);
-        }
+        aiAnalysis = JSON.parse(rawText);
       } catch (err) {
         console.warn('[SingleVideoAI] Live call error:', err);
       }

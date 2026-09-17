@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedUserId } from '@/lib/auth/server-auth';
 import { deductCredits, CREDIT_COSTS, InsufficientCreditsError } from '@/lib/credits/deduct';
 import { serverEnv } from '@/lib/env';
+import { generateWithGeminiFallback } from '@/lib/gemini';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,52 +78,11 @@ ${conversationContext ? `CONVERSATION HISTORY:\n${conversationContext}\n\n` : ''
 
 Deliver your strategic creative analysis:`;
 
-    const modelsToTry = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.7-flash', 'gemini-2.5-pro'];
-    let reply = '';
-    let lastError = '';
-
-    if (geminiKey) {
-      for (const model of modelsToTry) {
-        try {
-          const geminiRes = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: fullPrompt }] }],
-                generationConfig: {
-                  temperature: 0.5,
-                  maxOutputTokens: 3500,
-                  thinkingConfig: {
-                    thinkingBudget: 512,
-                  },
-                },
-              }),
-            }
-          );
-
-          if (geminiRes.ok) {
-            const gData = await geminiRes.json();
-            reply = gData.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            if (reply) break;
-          } else {
-            const errData = await geminiRes.json().catch(() => ({}));
-            lastError = errData?.error?.message || `HTTP ${geminiRes.status}`;
-            console.warn(`[AiChat] Gemini API error (${model}):`, lastError);
-          }
-        } catch (geminiErr: any) {
-          lastError = geminiErr.message;
-          console.warn(`[AiChat] Call exception (${model}):`, geminiErr.message);
-        }
-      }
-    } else {
-      lastError = 'Missing GEMINI_API_KEY in .env.local';
-    }
-
-    if (!reply) {
-      throw new Error(`Gemini API connection error: ${lastError || 'Unable to generate response'}`);
-    }
+    const reply = await generateWithGeminiFallback({
+      prompt: fullPrompt,
+      temperature: 0.5,
+      maxOutputTokens: 3500,
+    });
 
     return NextResponse.json({
       success: true,

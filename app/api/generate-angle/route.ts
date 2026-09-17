@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedUserId } from '@/lib/auth/server-auth';
 import { deductCredits, CREDIT_COSTS, InsufficientCreditsError } from '@/lib/credits/deduct';
 import { serverEnv } from '@/lib/env';
+import { generateWithGeminiFallback } from '@/lib/gemini';
 
 export const dynamic = 'force-dynamic';
 
@@ -96,27 +97,16 @@ Format strictly as a valid JSON array of 3 objects with these exact keys:
 ]
 Do not wrap in markdown quotes or extra commentary, return ONLY the raw JSON array.`;
 
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { responseMimeType: 'application/json' },
-            }),
-          }
-        );
+        const rawText = await generateWithGeminiFallback({
+          prompt,
+          responseJson: true,
+          temperature: 0.5,
+          maxOutputTokens: 2000,
+        });
 
-        if (geminiRes.ok) {
-          const geminiData = await geminiRes.json();
-          const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (rawText) {
-            angles = JSON.parse(rawText);
-          }
-        }
+        angles = JSON.parse(rawText);
       } catch (aiErr) {
-        console.warn('[AnglePivot] Gemini API call failed, using intelligent fallback:', aiErr);
+        console.warn('[AnglePivot] Gemini fallback cascade exhausted, using intelligent fallback:', aiErr);
       }
     }
 
