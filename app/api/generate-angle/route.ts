@@ -97,7 +97,7 @@ Format strictly as a valid JSON array of 3 objects with these exact keys:
 Do not wrap in markdown quotes or extra commentary, return ONLY the raw JSON array.`;
 
         const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

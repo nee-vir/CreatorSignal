@@ -78,7 +78,7 @@ You must return a valid JSON object with these exact keys:
 Format your response strictly as JSON with those keys. Do not include markdown code block formatting around the JSON.`;
 
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${geminiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${geminiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

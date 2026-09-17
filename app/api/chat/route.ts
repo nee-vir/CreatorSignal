@@ -64,44 +64,48 @@ ${conversationContext ? `CONVERSATION_HISTORY:\n${conversationContext}\n\n` : ''
 
 Provide your data-backed, mathematically precise analysis:`;
 
+    const modelsToTry = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.7-flash', 'gemini-2.5-pro'];
     let reply = '';
+    let lastError = '';
 
     if (geminiKey) {
-      try {
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${geminiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: fullPrompt }] }],
-              generationConfig: {
-                temperature: 0.4,
-                maxOutputTokens: 1200,
-              },
-            }),
-          }
-        );
+      for (const model of modelsToTry) {
+        try {
+          const geminiRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: fullPrompt }] }],
+                generationConfig: {
+                  temperature: 0.4,
+                  maxOutputTokens: 1500,
+                },
+              }),
+            }
+          );
 
-        if (geminiRes.ok) {
-          const gData = await geminiRes.json();
-          reply = gData.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        } else {
-          const errText = await geminiRes.text();
-          console.warn('[AiChat] Gemini API error:', errText);
+          if (geminiRes.ok) {
+            const gData = await geminiRes.json();
+            reply = gData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            if (reply) break;
+          } else {
+            const errData = await geminiRes.json().catch(() => ({}));
+            lastError = errData?.error?.message || `HTTP ${geminiRes.status}`;
+            console.warn(`[AiChat] Gemini API error (${model}):`, lastError);
+          }
+        } catch (geminiErr: any) {
+          lastError = geminiErr.message;
+          console.warn(`[AiChat] Call exception (${model}):`, geminiErr.message);
         }
-      } catch (geminiErr: any) {
-        console.warn('[AiChat] Call exception:', geminiErr.message);
       }
+    } else {
+      lastError = 'Missing GEMINI_API_KEY in .env.local';
     }
 
-    // Fallback intelligent response if API key is missing or offline
     if (!reply) {
-      reply = `### AI Co-Pilot Data Analysis
-Based on the live data retrieved:
-- **Analyzed Elements:** Verified the dataset from your current studio view.
-- **Key Observation:** The highest-performing upload commands a significant multiplier over the baseline median.
-- **Actionable Takeaway:** Double down on the primary curiosity gap established in the top-ranking titles and maintain visual contrast in thumbnail composition.`;
+      throw new Error(`Gemini API connection error: ${lastError || 'Unable to generate response'}`);
     }
 
     return NextResponse.json({
